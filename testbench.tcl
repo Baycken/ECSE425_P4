@@ -1,8 +1,14 @@
 proc AddWaves {} {
 	;#TODO ADD WAVES BASED ON PORTS
-    add wave -position end sim:/cache_tb/clk
-    add wave -position end sim:/cache_tb/reset
-   
+    add wave -position end sim:/testbench/clk
+    add wave -position end sim:/testbench/reset
+    add wave -position end sim:/testbench/if_instr
+    add wave -position end sim:/testbench/ex_opcode
+    add wave -position end sim:/testbench/ex_regs
+    add wave -position end sim:/testbench/ex_regt
+    add wave -position end sim:/testbench/id_data
+    add wave -position end sim:/testbench/id_register  
+
 
 
 }
