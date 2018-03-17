@@ -19,7 +19,7 @@ PORT (
    mem_read_data_i : IN STD_LOGIC_VECTOR (31 DOWNTO 0);
    mem_write_data_o : OUT STD_LOGIC_VECTOR (31 DOWNTO 0);
    mem_wait_i : IN STD_LOGIC;
-)
+);
 END mips32;
 
 ARCHITECTURE behaviour OF mips32 IS
@@ -47,7 +47,7 @@ PORT(
    bht_write_addr_i: IN STD_LOGIC_VECTOR (9 DOWNTO 0);
    bht_we_i: IN STD_LOGIC;
    bht_din_i: IN STD_LOGIC;
-)
+);
 END COMPONENT
 
 COMPONENT decode IS
@@ -88,7 +88,7 @@ PORT(
    reg_alu_cmd_o: OUT STD_LOGIC_VECTOR (4 DOWNTO 0);
    bht_token_i: IN STD_LOGIC_VECTOR (1 DOWNTO 0);
    reg_bht_token_o: OUT STD_LOGIC_VECTOR (1 DOWNTO 0);
-)
+);
 END COMPONENT
 
 COMPONENT execute IS
@@ -129,7 +129,7 @@ PORT(
    reg_pc_branch_o : IN STD_LOGIC_VECTOR (31 DOWNTO 0);
    reg_pc_jump_o : IN STD_LOGIC_VECTOR (31 DOWNTO 0);
    reg_pc_next_o : IN STD_LOGIC_VECTOR (31 DOWNTO 0);
-)
+);
 END COMPONENT
 
 COMPONENT mem IS
@@ -176,7 +176,7 @@ PORT(
    alu_out_i : IN STD_LOGIC_VECTOR (31 DOWNTO 0);
    write_data_o : OUT STD_LOGIC_VECTOR (31 DOWNTO 0);
    regwrite_flag_o : OUT STD_LOGIC;
-)
+);
 
 SIGNAL if_reg_pc : STD_LOGIC_VECTOR (31 DOWNTO 0);
 SIGNAL if_reg_inst : STD_LOGIC_VECTOR (31 DOWNTO 0);
