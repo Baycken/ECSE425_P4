@@ -21,7 +21,7 @@ ENTITY memory IS
 END memory;
 
 ARCHITECTURE rtl OF memory IS
-	TYPE MEM IS ARRAY(ram_size-1 downto 0) OF STD_LOGIC_VECTOR(7 DOWNTO 0);
+	TYPE MEM IS ARRAY(ram_size-1 downto 0) OF STD_LOGIC_VECTOR(31 DOWNTO 0);
 	SIGNAL ram_block: MEM;
 	SIGNAL read_address_reg: INTEGER RANGE 0 to ram_size-1;
 	SIGNAL write_waitreq_reg: STD_LOGIC := '1';
@@ -33,7 +33,7 @@ BEGIN
 		--This is a cheap trick to initialize the SRAM in simulation
 		IF(now < 1 ns)THEN
 			For i in 0 to ram_size-1 LOOP
-				ram_block(i) <= std_logic_vector(to_unsigned(i,32)(7 downto 0));
+				ram_block(i) <= std_logic_vector(to_unsigned(i,32)(31 downto 0));
 			END LOOP;
 		end if;
 
@@ -53,7 +53,7 @@ BEGIN
 	waitreq_w_proc: PROCESS (memwrite)
 	BEGIN
 		IF(memwrite'event AND memwrite = '1')THEN
-			write_waitreq_reg <= '0' after mem_delay, '1' after clock_period;
+			write_waitreq_reg <= '0' after clock_period, '1' after clock_period;
 
 		END IF;
 	END PROCESS;
@@ -61,7 +61,7 @@ BEGIN
 	waitreq_r_proc: PROCESS (memread)
 	BEGIN
 		IF(memread'event AND memread = '1')THEN
-			read_waitreq_reg <= '0' after mem_delay, '1' after clock_period;
+			read_waitreq_reg <= '0' after clock_period, '1' after clock_period;
 		END IF;
 	END PROCESS;
 	waitrequest <= write_waitreq_reg and read_waitreq_reg;
