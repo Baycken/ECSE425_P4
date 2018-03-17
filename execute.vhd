@@ -29,7 +29,9 @@ port(
 	result : out std_logic_vector(31 downto 0); --ALU result
 	pc_out : out std_logic_vector(31 downto 0); --Modified PC
 	dest_reg_out : out std_logic_vector(31 downto 0);	--destination reg for ALU output
-	is_new_pc: out std_logic :='0'
+	is_new_pc: out std_logic :='0';
+	is_load: out std_logic :='0';
+	is_store: out std_logic :='0'
 );
 end execute;
 
@@ -45,6 +47,8 @@ begin
 process(clk)
 begin
 	is_new_pc<='0'; --reset is_new_pc variable (assume no jump at first)
+	is_load<='0';
+	is_store<='0';
 	if (opcode = "000000") then --if R instruction 
 	
 	--determine fcn to be performed 
@@ -55,12 +59,10 @@ begin
 				long_result<= std_logic_vector(signed(regs)*signed(regt)); --mult
 				result_low_local<= long_result(31 downto 0);
 				result_hi_local<=long_result(63 downto 32);
-				result_low<=result_low_local;	--Assert outputs
-				result_hi<=result_hi_local;	
 			when "111010"	=>	--div
 				long_result<=std_logic_vector(signed(regs) / signed(regt));
-				result_low<=long_result(31 downto 0);
-				result_hi<=std_logic_vector(signed(regs) mod signed(regt));
+				result_low_local<=long_result(31 downto 0);
+				result_hi_local<=std_logic_vector(signed(regs) mod signed(regt));
 			when "101010"	=>	--Set Less Than (slt)
 				if(regs<regt) then
 					result_local <=x"1";
@@ -110,8 +112,8 @@ begin
 			when "001101" => result_local<= regs OR "0000000000000000"&immed;	--Or Immediate (ZeroExt)
 			when "001110" => result_local<=regs XOR "0000000000000000"&immed; --XOR Immed (ZeroExt)
 			when "001111" => result_local<= immed(15 downto 0) & "0000000000000000"; --Load Upper Immed
-			when "100011" => --Load Word
-			when "101011" => --Store Word
+			when "100011" => is_load<='1';	--Load Word
+			when "101011" => is_store<='1';	--Store Word
 			when "000100" => --Branch on equal
 				if(regs=regt) then
 					pc_out<=std_logic_vector(unsigned(pc_in)+"0000000000000000"&unsigned(immed));
