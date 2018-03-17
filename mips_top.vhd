@@ -18,7 +18,7 @@ PORT (
    mem_read_o : OUT STD_LOGIC;
    mem_read_data_i : IN STD_LOGIC_VECTOR (31 DOWNTO 0);
    mem_write_data_o : OUT STD_LOGIC_VECTOR (31 DOWNTO 0);
-   mem_wait_i : IN STD_LOGIC;
+   mem_wait_i : IN STD_LOGIC
 );
 END mips32;
 
@@ -46,9 +46,9 @@ PORT(
 
    bht_write_addr_i: IN STD_LOGIC_VECTOR (9 DOWNTO 0);
    bht_we_i: IN STD_LOGIC;
-   bht_din_i: IN STD_LOGIC;
+   bht_din_i: IN STD_LOGIC
 );
-END COMPONENT
+END COMPONENT;
 
 COMPONENT decode IS
 PORT(
@@ -87,9 +87,9 @@ PORT(
    reg_forward_b_o: OUT STD_LOGIC_VECTOR (1 DOWNTO 0);
    reg_alu_cmd_o: OUT STD_LOGIC_VECTOR (4 DOWNTO 0);
    bht_token_i: IN STD_LOGIC_VECTOR (1 DOWNTO 0);
-   reg_bht_token_o: OUT STD_LOGIC_VECTOR (1 DOWNTO 0);
+   reg_bht_token_o: OUT STD_LOGIC_VECTOR (1 DOWNTO 0)
 );
-END COMPONENT
+END COMPONENT;
 
 COMPONENT execute IS
 PORT(
@@ -128,9 +128,9 @@ PORT(
    reg_pc_o : IN STD_LOGIC_VECTOR (31 DOWNTO 0);
    reg_pc_branch_o : IN STD_LOGIC_VECTOR (31 DOWNTO 0);
    reg_pc_jump_o : IN STD_LOGIC_VECTOR (31 DOWNTO 0);
-   reg_pc_next_o : IN STD_LOGIC_VECTOR (31 DOWNTO 0);
+   reg_pc_next_o : IN STD_LOGIC_VECTOR (31 DOWNTO 0)
 );
-END COMPONENT
+END COMPONENT;
 
 COMPONENT mem IS
 PORT(
@@ -166,8 +166,9 @@ PORT(
    mem_read_o : OUT STD_LOGIC;
    mem_read_data_i : IN STD_LOGIC_VECTOR (31 DOWNTO 0);
    mem_write_data_o : OUT STD_LOGIC_VECTOR (31 DOWNTO 0);
-   mem_wait_i : IN STD_LOGIC;
-)
+   mem_wait_i : IN STD_LOGIC
+);
+END COMPONENT;
 
 COMPONENT writeback IS
 PORT(
@@ -177,6 +178,7 @@ PORT(
    write_data_o : OUT STD_LOGIC_VECTOR (31 DOWNTO 0);
    regwrite_flag_o : OUT STD_LOGIC;
 );
+END COMPONENT;
 
 SIGNAL if_reg_pc : STD_LOGIC_VECTOR (31 DOWNTO 0);
 SIGNAL if_reg_inst : STD_LOGIC_VECTOR (31 DOWNTO 0);
@@ -247,7 +249,7 @@ PORT MAP(
    reg_bht_token_o => if_reg_bht_token;
    bht_write_addr_i => bht_write_addr;
    bht_we_i => m_bht_we;
-   bht_din_i => m_bht_din;
+   bht_din_i => m_bht_din
 );
 
 decode_inst: decode
@@ -280,7 +282,7 @@ PORT MAP(
    reg_forward_b_o => id_reg_forward_b;
    reg_alu_cmd_o => id_reg_alu_cmd;
    bht_token_i => if_reg_bht_token;
-   reg_bht_token_o => id_reg_bht_token;
+   reg_bht_token_o => id_reg_bht_token
 );
 
 execute_inst: execute
@@ -316,7 +318,7 @@ PORT MAP(
    reg_pc_o => ex_reg_pc;
    reg_pc_branch_o => ex_pc_branch;
    reg_pc_jump_o => ex_pc_jump;
-   reg_pc_next_o => ex_pc_next;
+   reg_pc_next_o => ex_pc_next
 );
 
 mem_inst : mem
@@ -349,7 +351,7 @@ PORT MAP(
    mem_read_o => mem_read_o;
    mem_read_data_i => mem_read_data_i;
    mem_write_data_o => mem_write_data_o;
-   mem_wait_i => mem_wait_i;
+   mem_wait_i => mem_wait_i
 );
 
 writeback_inst : writeback
@@ -358,7 +360,7 @@ PORT MAP(
    mem_out_i => m_reg_mem_out;
    alu_out_i => m_reg_alu_out;
    write_data_o => wb_write_data;
-   regwrite_flag_o => wb_regwrite_flag;
+   regwrite_flag_o => wb_regwrite_flag
 );
 
 END;
