@@ -50,7 +50,7 @@ begin
 	is_load<='0';
 	is_store<='0';
 	if (opcode = "000000") then --if R instruction 
-	
+		dest_reg_out<=rd;
 	--determine fcn to be performed 
 		case func is
 			when "100000" => 	result_local <= std_logic_vector(signed(regs) + signed(regt));	--add inst
@@ -101,6 +101,7 @@ begin
 		end case;
 
 	else	--I type inst
+		dest_reg_out<=rt;
 		case func is
 			when "001000" => result_local<=std_logic_vector(signed(regs) + signed(immed));	--Add Immed
 			when "001010" => --Set Less Than Immed
