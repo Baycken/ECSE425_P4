@@ -39,7 +39,7 @@ PORT(
    jump_token_i : IN STD_LOGIC;
    is_hazard_i: IN STD_LOGIC_VECTOR (31 DOWNTO 0);
    is_flush_i: IN STD_LOGIC_VECTOR (31 DOWNTO 0);
-   is_cache_stall_i: IN STD_LOGIC_VECTOR (31 DOWNTO 0);
+   is_mem_stall_i: IN STD_LOGIC;
    reg_pc_o: OUT STD_LOGIC_VECTOR (31 DOWNTO 0);
    reg_inst_o: OUT STD_LOGIC_VECTOR (31 DOWNTO 0);
    reg_bht_token_o: OUT STD_LOGIC_VECTOR (31 DOWNTO 0);
@@ -50,6 +50,7 @@ PORT(
 );
 END COMPONENT;
 
+-- Instruction Decoding
 COMPONENT decode IS
 PORT(
    clk_i : IN STD_LOGIC;
@@ -61,20 +62,22 @@ PORT(
    reg_write_flag_i : IN STD_LOGIC;
    reg_write_reg_i : IN STD_LOGIC_VECTOR (4 DOWNTO 0);
    reg_write_data_i : IN STD_LOGIC_VECTOR (31 DOWNTO 0);
+   reg_rt_o : OUT STD_LOGIC_VECTOR (4 DOWNTO 0);
+   reg_rd_o : OUT STD_LOGIC_VECTOR (4 DOWNTO 0);
 
    is_flush_i : IN STD_LOGIC;
-   is_cache_stall_i : IN STD_LOGIC;
+   is_mem_stall_i : IN STD_LOGIC;
 
    reg1_data_o : OUT STD_LOGIC_VECTOR (31 DOWNTO 0);
    reg2_data_o : OUT STD_LOGIC_VECTOR (31 DOWNTO 0);
    reg_immediate_o : OUT STD_LOGIC_VECTOR (31 DOWNTO 0);
    reg_inst_o : STD_LOGIC_VECTOR (31 DOWNTO 0);
-   reg_rt_o : OUT STD_LOGIC_VECTOR (4 DOWNTO 0);
-   reg_rd_o : OUT STD_LOGIC_VECTOR (4 DOWNTO 0);
+
 
    reg_pc_o : OUT STD_LOGIC_VECTOR (31 DOWNTO 0);
-   reg_ctr_ex_o : OUT STD_LOGIC_VECTOR (4 DOWNTO 0);
-   reg_ctr_m_o : OUT STD_LOGIC_VECTOR (5 DOWNTO 0);
+   reg_ctr_opcode_o : OUT STD_LOGIC_VECTOR (5 DOWNTO 0);
+   reg_ctr_shamt_o : OUT STD_LOGIC_VECTOR (4 DOWNTO 0);
+   reg_ctr_funct_o: OUT STD_LOGIC_VECTOR (5 DOWNTO 0);
    reg_ctr_wb_o : OUT STD_LOGIC_VECTOR (1 DOWNTO 0);
    is_hazard_o : OUT STD_LOGIC;
 
@@ -85,34 +88,36 @@ PORT(
    mem_regwrite_flag_i : IN STD_LOGIC;
    reg_forward_a_o: OUT STD_LOGIC_VECTOR (1 DOWNTO 0);
    reg_forward_b_o: OUT STD_LOGIC_VECTOR (1 DOWNTO 0);
-   reg_alu_cmd_o: OUT STD_LOGIC_VECTOR (4 DOWNTO 0);
    bht_token_i: IN STD_LOGIC_VECTOR (1 DOWNTO 0);
    reg_bht_token_o: OUT STD_LOGIC_VECTOR (1 DOWNTO 0)
 );
 END COMPONENT;
 
+-- Execution
 COMPONENT execute IS
 PORT(
    clk_i : IN STD_LOGIC;
    rst_i : IN STD_LOGIC;
-   ctr_ex_i : IN STD_LOGIC_VECTOR (3 DOWNTO 0);
-   ctr_m_i : IN STD_LOGIC_VECTOR (5 DOWNTO 0);
+   is_flush_i : IN STD_LOGIC;
+   is_mem_stall_i : IN STD_LOGIC;
+
+   ctr_shamt_i : IN STD_LOGIC_VECTOR (4 DOWNTO 0);
+   ctr_opcode_i : IN STD_LOGIC_VECTOR (5 DOWNTO 0);
+   ctr_funct_i : IN STD_LOGIC_VECTOR (3 DOWNTO 0);
    ctr_wb_i : IN STD_LOGIC_VECTOR (1 DOWNTO 0);
    pc_i : IN STD_LOGIC_VECTOR (31 DOWNTO 0);
+
    inst_i : IN STD_LOGIC_VECTOR (31 DOWNTO 0);
    reg1_data_i : IN STD_LOGIC_VECTOR (31 DOWNTO 0);
    reg2_data_i : IN STD_LOGIC_VECTOR (31 DOWNTO 0);
    immediate_i : IN STD_LOGIC_VECTOR (31 DOWNTO 0);
    rt_i : IN STD_LOGIC_VECTOR (4 DOWNTO 0);
    rd_i : IN STD_LOGIC_VECTOR (4 DOWNTO 0);
-   is_flush_i : IN STD_LOGIC;
-   is_cache_stall_i : IN STD_LOGIC;
-   alu_cmd_i : IN STD_LOGIC_VECTOR (3 DOWNTO 0);
+
 
    reg_alu_out_o : OUT STD_LOGIC_VECTOR (31 DOWNTO 0);
    reg_reg2_data_o : OUT STD_LOGIC_VECTOR (31 DOWNTO 0);
    reg_write_reg_o : OUT STD_LOGIC_VECTOR (4 DOWNTO 0);
-   reg_ctr_m_o : OUT STD_LOGIC_VECTOR (5 DOWNTO 0);
    reg_ctr_wb_o : OUT STD_LOGIC_VECTOR (1 DOWNTO 0);
 
    -- Bypass Interface
@@ -132,12 +137,13 @@ PORT(
 );
 END COMPONENT;
 
+-- Memory Access
 COMPONENT mem IS
 PORT(
    clk_i : IN STD_LOGIC;
    rst_i : IN STD_LOGIC;
 
-   ctr_m_i : IN STD_LOGIC_VECTOR (5 DOWNTO 0);
+   ctr_opcode_i : IN STD_LOGIC_VECTOR (5 DOWNTO 0);
    ctr_wb_i : IN STD_LOGIC_VECTOR (1 DOWNTO 0);
    alu_out_i : IN STD_LOGIC_VECTOR (31 DOWNTO 0);
 
@@ -149,7 +155,7 @@ PORT(
    reg_write_reg_o : OUT STD_LOGIC_VECTOR (4 DOWNTO 0);
    reg_ctr_wb_o : OUT STD_LOGIC_VECTOR (1 DOWNTO 0);
    is_flush_o : OUT STD_LOGIC;
-   is_cache_stall_o : OUT STD_LOGIC;
+   is_mem_stall_o : OUT STD_LOGIC;
 
    pc_i : IN STD_LOGIC_VECTOR (31 DOWNTO 0);
    pc_branch_i : IN STD_LOGIC_VECTOR (31 DOWNTO 0);
@@ -170,13 +176,14 @@ PORT(
 );
 END COMPONENT;
 
+-- Writeback
 COMPONENT writeback IS
 PORT(
    ctr_wb_i : IN STD_LOGIC_VECTOR (1 DOWNTO 0);
    mem_out_i : IN STD_LOGIC_VECTOR (31 DOWNTO 0);
    alu_out_i : IN STD_LOGIC_VECTOR (31 DOWNTO 0);
    write_data_o : OUT STD_LOGIC_VECTOR (31 DOWNTO 0);
-   regwrite_flag_o : OUT STD_LOGIC;
+   regwrite_flag_o : OUT STD_LOGIC
 );
 END COMPONENT;
 
@@ -191,19 +198,19 @@ SIGNAL id_reg_rt : STD_LOGIC_VECTOR (4 DOWNTO 0);
 SIGNAL id_reg_rd : STD_LOGIC_VECTOR (4 DOWNTO 0);
 SIGNAL id_reg_pc : STD_LOGIC_VECTOR (31 DOWNTO 0);
 SIGNAL id_reg_inst : STD_LOGIC_VECTOR (31 DOWNTO 0);
-SIGNAL id_reg_ctr_ex : STD_LOGIC_VECTOR (3 DOWNTO 0);
-SIGNAL id_reg_ctr_m : STD_LOGIC_VECTOR (5 DOWNTO 0);
+SIGNAL id_reg_ctr_opcode : STD_LOGIC_VECTOR (5 DOWNTO 0);
+SIGNAL id_reg_ctr_shamt : STD_LOGIC_VECTOR (4 DOWNTO 0);
+SIGNAL id_reg_ctr_funct : STD_LOGIC_VECTOR (5 DOWNTO 0);
 SIGNAL id_reg_ctr_wb : STD_LOGIC_VECTOR (1 DOWNTO 0);
-SIGNAL is_hazard : STD_LOGIC;
+SIGNAL id_is_hazard : STD_LOGIC;
 SIGNAL id_reg_forward_a : STD_LOGIC_VECTOR (1 DOWNTO 0);
 SIGNAL id_reg_forward_b : STD_LOGIC_VECTOR (1 DOWNTO 0);
-SIGNAL id_reg_alu_cmd : STD_LOGIC_VECTOR (3 DOWNTO 0);
 SIGNAL id_reg_bht_token : STD_LOGIC_VECTOR (1 DOWNTO 0);
 
 SIGNAL ex_reg_alu_out : STD_LOGIC_VECTOR (31 DOWNTO 0);
 SIGNAL ex_reg_reg2_data : STD_LOGIC_VECTOR (31 DOWNTO 0);
 SIGNAL ex_reg_write_reg : STD_LOGIC_VECTOR (4 DOWNTO 0);
-SIGNAL ex_reg_ctr_m : STD_LOGIC_VECTOR (5 DOWNTO 0);
+SIGNAL ex_reg_ctr_opcode : STD_LOGIC_VECTOR (5 DOWNTO 0);
 SIGNAL ex_reg_ctr_wb : STD_LOGIC_VECTOR (1 DOWNTO 0);
 SIGNAL ex_write_reg : STD_LOGIC_VECTOR (4 DOWNTO 0);
 SIGNAL ex_regwrite_flag : STD_LOGIC;
@@ -221,7 +228,7 @@ SIGNAL m_is_flush : STD_LOGIC;
 
 SIGNAL m_real_token : STD_LOGIC;
 SIGNAL m_jump_token : STD_LOGIC;
-SIGNAL m_is_cache_stall : STD_LOGIC;
+SIGNAL m_is_mem_stall : STD_LOGIC;
 SIGNAL m_bht_write_addr : STD_LOGIC_VECTOR (9 DOWNTO 0);
 SIGNAL m_bht_we : STD_LOGIC;
 SIGNAL m_bht_din : STD_LOGIC_VECTOR (31 DOWNTO 0);
@@ -236,14 +243,14 @@ PORT MAP(
    clk_i => clk_i;
    rst_i => rst_i;
    inst_wait_i => inst_wait_i;
-   pc_branch_i => pc_branch;
-   pc_jump_i => pc_jump;
-   pc_next_i => pc_next;
-   real_token_i => real_token;
-   jump_token_i => jump_token;
-   is_hazard_i => is_hazard;
+   pc_branch_i => ex_pc_branch;
+   pc_jump_i => ex_pc_jump;
+   pc_next_i => ex_pc_next;
+   real_token_i => ex_real_token;
+   jump_token_i => ex_jump_token;
+   is_hazard_i => id_is_hazard;
    is_flush_i => is_flush;
-   is_cache_stall_i => m_is_cache_stall;
+   is_mem_stall_i => m_is_mem_stall;
    reg_pc_o => if_reg_pc;
    reg_inst_o => if_reg_inst;
    reg_bht_token_o => if_reg_bht_token;
@@ -262,7 +269,7 @@ PORT MAP(
    reg_write_reg_i => m_reg_write_reg;
    reg_write_data_i => wb_write_data;
    is_flush_i => m_is_flush;
-   is_cache_stall_i => m_is_cache_stall;
+   is_mem_stall_i => m_is_mem_stall;
    reg1_data_o => id_reg1_data;
    reg2_data_o => id_reg2_data;
    reg_immediate_o => id_reg_immediate;
@@ -270,17 +277,19 @@ PORT MAP(
    reg_rt_o => id_reg_rt;
    reg_rd_o => id_reg_rd;
    reg_pc_o => id_reg_pc;
-   reg_ctr_ex_o => id_reg_ctr_ex;
-   reg_ctr_m_o => id_reg_ctr_m;
+
+   reg_ctr_opcode_o => id_reg_ctr_opcode;
+   reg_ctr_shamt_o => id_reg_ctr_shamt;
+   reg_ctr_funct_o => id_reg_ctr_funct;
    reg_ctr_wb_o => id_reg_ctr_wb;
-   is_hazard_o => m_is_hazard;
+
+   is_hazard_o => id_is_hazard;
    ex_write_reg_i => ex_write_reg;
    ex_regwrite_flag_i => ex_regwrite_flag;
    mem_write_reg_i => ex_reg_write_reg;
    mem_regwrite_flag_i => ex_reg_ctr_wb[1];
    reg_forward_a_o => id_reg_forward_a;
    reg_forward_b_o => id_reg_forward_b;
-   reg_alu_cmd_o => id_reg_alu_cmd;
    bht_token_i => if_reg_bht_token;
    reg_bht_token_o => id_reg_bht_token
 );
@@ -289,9 +298,12 @@ execute_inst: execute
 PORT MAP(
    clk_i => clk_i;
    rst_i => rst_i;
-   ctr_ex_i => id_reg_ctr_ex;
-   ctr_m_i => id_reg_ctr_m;
+
+   ctr_opcode_i => id_reg_ctr_opcode;
+   ctr_shamt_i => id_reg_ctr_shamt;
+   ctr_funct_i => id_reg_ctr_funct;
    ctr_wb_i => id_reg_ctr_wb;
+
    pc_i =>  id_reg_pc;
    inst_i => id_reg_inst;
    reg1_data_i => id_reg1_data;
@@ -300,12 +312,11 @@ PORT MAP(
    rt_i => id_reg_rt;
    rd_i => id_reg_rd;
    is_flush_i => m_is_flush;
-   is_cache_stall_i => m_is_cache_stall;
-   alu_cmd_i => id_reg_alu_cmd;
+   is_mem_stall_i => m_is_mem_stall;
    reg_alu_out_o => ex_reg_alu_out;
    reg_reg2_data_o => ex_reg_reg2_data;
    reg_write_reg_o => ex_reg_write_reg;
-   reg_ctr_m_o => ex_reg_ctr_m;
+   reg_ctr_opcode_o => ex_reg_ctr_opcode;
    reg_ctr_wb_o => ex_reg_ctr_wb;
    ex_mem_data_i => ex_reg_alu_out;
    mem_wb_data_i => wb_write_data;
@@ -325,7 +336,7 @@ mem_inst : mem
 PORT MAP(
    clk_i => clk_i;
    rst_i => rst_i;
-   ctr_m_i => ex_reg_ctr_m;
+   ctr_opcode_i => ex_reg_ctr_opcode;
    ctr_wb_i => ex_reg_ctr_wb;
    alu_out_i => ex_reg_alu_out;
    reg2_data_i => ex_reg_reg2_data;
@@ -335,7 +346,7 @@ PORT MAP(
    reg_write_reg_o => m_reg_write_reg;
    reg_ctr_wb_o => m_reg_ctr_wb;
    is_flush_o => m_is_flush;
-   is_cache_stall_o => m_is_cache_stall;
+   is_mem_stall_o => m_is_mem_stall;
    pc_i => ex_reg_pc;
    pc_branch_i => ex_pc_branch;
    pc_jump_i => ex_pc_jump;
