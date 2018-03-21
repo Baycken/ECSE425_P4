@@ -1,7 +1,13 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
-
+package my_pkg is 
+	type data_array is array(31 downto 0) of std_logic_vector(31 downto 0);
+end;
+use work.my_pkg.all;
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 entity decode is
 port(
 	--inputs
@@ -11,6 +17,7 @@ port(
 	wb_register : in std_logic_vector(31 downto 0); --register to store wb_data
 	wb_data : in std_logic_vector(31 downto 0); --data from writeback stage to put into register
 	clk : in std_logic;
+	reset : in std_logic;
 
 	--outputs for both R and I instructions
 	ex_pc : out std_logic_vector(31 downto 0); --program counter
@@ -30,13 +37,16 @@ port(
 	target : out std_logic_vector(25 downto 0); --branch target
 
 	--Data Hazard Detection
-	hazard : out std_logic --high if hazard
+	hazard : out std_logic; --high if hazard
+
+	--Registers
+	out_registers : out data_array
 );
 end decode;
 
 architecture behaviour of decode is
 --
-type data_array is array(31 downto 0) of std_logic_vector(31 downto 0);
+--type data_array is array(31 downto 0) of std_logic_vector(31 downto 0);
 type bit_array is array(31 downto 0) of std_logic;
 
 signal registers : data_array;--32 registers of 32 bits
@@ -53,7 +63,7 @@ begin
 
 --TODO: I instruction extended immediates, stalls
 
-process (clk)
+process (clk, reset)
 procedure bubble IS
 begin
 	stall <= '1';
@@ -67,6 +77,21 @@ begin
 end procedure;
 
 begin
+if reset = '1' then
+	for I in 0 to 31 loop
+		registers(I) <= x"00000000";
+	end loop;
+	ex_pc <= x"00000000";
+	ex_opcode <= x"00000000";
+	ex_regs <= x"00000000";
+	ex_regt <= x"00000000";
+	ex_regd <= x"00000000";
+	ex_shift <= "00000";
+	ex_func <= "000000";
+	ex_immed <= x"00000000";
+	target <= "00000000000000000000000000";
+	hazard <= '0';
+end if;
 if rising_edge(clk) then
 	--write data to registers from the write back stage
 	if (wb_flag = '1') then
