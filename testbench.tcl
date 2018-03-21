@@ -20,6 +20,10 @@ vcom decode.vhd
 vcom writeback.vhd
 vcom memory.vhd
 vcom testbench.vhd
+vcom instructionFetch.vhd
+vcom instructionMemory.vhd
+vcom mem_stage.vhd
+vcom mips_top.vhd
 
 ;# Start simulation
 vsim testbench
