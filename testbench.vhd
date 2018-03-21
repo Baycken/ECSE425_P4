@@ -1,4 +1,5 @@
 
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -63,7 +64,7 @@ GENERIC(
 PORT (
     clock: IN STD_LOGIC;
     writedata: IN STD_LOGIC_VECTOR (7 DOWNTO 0);
-    address: IN INTEGER RANGE 0 TO ram_size-1;
+    address: IN INTEGER RANGE 0 TO 8191;
     memwrite: IN STD_LOGIC;
     memread: IN STD_LOGIC;
     readdata: OUT STD_LOGIC_VECTOR (7 DOWNTO 0);
@@ -203,11 +204,14 @@ begin
 	end loop;
 	file_close(register_file);
 
-	--for i in 0 to 8191 loop
-	--		for i in 0 to 3 loop
-			
-	--end loop;
-	--file_close(program);
+
+	file_open(mem_file,"memory.txt",write_mode);
+	for i in 0 to 8191 loop
+		address <= i;
+		write(mem_line, readdata);
+		writeline(mem_file, mem_line); 
+	end loop;
+	file_close(program);
 		
 
 	--wait for clk_period;
