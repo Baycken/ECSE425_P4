@@ -5,6 +5,15 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use std.textio.all;
 
+package my_pkg is 
+	type data_array is array(31 downto 0) of std_logic_vector(31 downto 0);
+end;
+use work.my_pkg.all;
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+use std.textio.all;
+
 entity testbench is
 end testbench;
 
@@ -51,7 +60,7 @@ port(
 	id_register : out std_logic_vector(31 downto 0);
 	id_data : out std_logic_vector(31 downto 0);
 
-	registers: out array(31 downto 0) of std_logic_vector(31 down to 0);
+	out_registers: out data_array;
 );
 end component;
 
@@ -110,6 +119,8 @@ signal target : std_logic_vector(25 downto 0); --branch target
 signal id_register : std_logic_vector(31 downto 0);
 signal id_data : std_logic_vector(31 downto 0);
 
+signal out_registers :  data_array;
+
 begin
 
 -- Connect the components which we instantiated above to their
@@ -149,7 +160,9 @@ port map(
 	target => target,--branch target
 
 	id_register => id_register,
-	id_data => id_data
+	id_data => id_data,
+
+	out_registers => out_registers
    
 );
 
@@ -199,7 +212,7 @@ begin
 	file_open(register_file,"register_file.txt",write_mode);
 	
 	for i in 0 to 31 loop
-		write(register_line, registers(i));
+		write(register_line, out_registers(i));
 		writeline(register_file, register_line);
 	end loop;
 	file_close(register_file);
