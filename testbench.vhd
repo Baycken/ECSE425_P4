@@ -1,6 +1,8 @@
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use std.textio.all;
 
 entity testbench is
 end testbench;
@@ -24,6 +26,10 @@ port(
 	mem_register : in std_logic_vector(31 downto 0);
 	mem_data : in std_logic_vector(31 downto 0);
 
+	memwrite: in std_logic_vector(31 downto 0);
+	writedata: in std_logic_vector(31 downto 0);
+
+
 	--outputs for both R and I instructions
 	ex_pc : out std_logic_vector(31 downto 0); --program counter
 	ex_opcode: out std_logic_vector(5 downto 0); --intruction opcode
@@ -42,7 +48,9 @@ port(
 	target : out std_logic_vector(25 downto 0); --branch target
 	-- outputs of operations
 	id_register : out std_logic_vector(31 downto 0);
-	id_data : out std_logic_vector(31 downto 0)
+	id_data : out std_logic_vector(31 downto 0);
+
+	registers: out array(31 downto 0) of std_logic_vector(31 down to 0);
 );
 end component;
 
@@ -77,6 +85,9 @@ signal wb_data : std_logic_vector(31 downto 0); --data from writeback stage to p
 	
 signal mem_register : std_logic_vector(31 downto 0);
 signal mem_data : std_logic_vector(31 downto 0);
+
+signal memwrite : std_logic_vector(31 downto 0);
+signal writedata : std_logic_vector(31 downto 0);
 
 --outputs for both R and I instructions
 signal ex_pc : std_logic_vector(31 downto 0); --program counter
@@ -115,6 +126,10 @@ port map(
 	
 	mem_register => mem_register,
 	mem_data => mem_data,
+	
+	memwrite => memwrite,
+	write_data => write_data,
+	
 
 	ex_pc => ex_pc,
 	ex_opcode => ex_opcode,
@@ -134,8 +149,8 @@ port map(
 
 	id_register => id_register,
 	id_data => id_data
-  
-  );
+   
+);
 
 				
 
@@ -148,28 +163,68 @@ begin
 end process;
 
 test_process : process
+
+file     program:            text; 
+variable program_line:       line;
+
+file     mem_file:	     text;
+variable mem_line:	     line;
+
+file 	 register_file:      text;
+variable register_line:      line;
+
 begin
+	file_open(program,"program.txt", read_mode);
+	
         --init	
         reset <= '1';
         wait for 3*clk_period;
         reset <= '0';
+	
+	while (not endfile(program)) loop
+		if (clk'event and clk = '1') then
+                	readline(program, program_line);
+			read(program_line, write_data);
+			mem_write <= '1';
+			wait for clk_period;
+			mem_write <= '0';
+		end if;
+	end loop;
+	file_close(program);
+	
+	wait for 9000*clk_period;
 
+	
+	file_open(register_file,"register_file.txt",write_mode);
+	
+	for i in 0 to 31 loop
+		write(register_line, registers(i));
+		writeline(register_file, register_line);
+	end loop;
+	file_close(register_file);
 
-	wait for clk_period;
-	if_instr <= x"00010005"; --I instruction (addi $1 $0 5)
-	wait for 3*clk_period;
-	assert(ex_regs = x"00000000") report "Register s should contain 0's" severity error;
-	assert(ex_regt = x"00000005") report "Register t should contain value of 5" severity error;
-	if_instr <= x"00020001"; --I instruction (addi $2 $0 1)
-	wait for 3*clk_period;
-	assert(ex_regs = x"00000000") report "Register s should contain 0's" severity error;
-	assert(ex_regt = x"00000001") report "Register t should contain value of 1" severity error;
-	if_instr <= x"00220018";  -- R instruction (mult $1 $2)
-	wait for 10*clk_period;
-	assert(ex_regs = x"00000005") report "Register s (1) should contain value of 5" severity error;
-	assert(ex_regt = x"00000001") report "Register t (2) should contain value of 1" severity error;
-	assert(id_register = x"00000001") report "Result should be stored in register 1" severity error;
-	assert(id_data = x"00000005") report "Result should be 5*1 or 5" severity error;
+	--for i in 0 to 8191 loop
+	--		for i in 0 to 3 loop
+			
+	--end loop;
+	--file_close(program);
+		
+
+	--wait for clk_period;
+--	if_instr <= x"00010005"; --I instruction (addi $1 $0 5)
+--	wait for 3*clk_period;
+--	assert(ex_regs = x"00000000") report "Register s should contain 0's" severity error;
+--	assert(ex_regt = x"00000005") report "Register t should contain value of 5" severity error;
+--	if_instr <= x"00020001"; --I instruction (addi $2 $0 1)
+--	wait for 3*clk_period;
+--	assert(ex_regs = x"00000000") report "Register s should contain 0's" severity error;
+--	assert(ex_regt = x"00000001") report "Register t should contain value of 1" severity error;
+--	if_instr <= x"00220018";  -- R instruction (mult $1 $2)
+--	wait for 10*clk_period;
+--	assert(ex_regs = x"00000005") report "Register s (1) should contain value of 5" severity error;
+--	assert(ex_regt = x"00000001") report "Register t (2) should contain value of 1" severity error;
+--	assert(id_register = x"00000001") report "Result should be stored in register 1" severity error;
+--	assert(id_data = x"00000005") report "Result should be 5*1 or 5" severity error;
 
 	
 	wait;
