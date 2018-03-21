@@ -2,7 +2,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity intstructionFetch is
+entity instructionFetch is
 generic(
 	ram_size : INTEGER := 32768
 );
@@ -29,14 +29,16 @@ port(
 	--communication with decode stage (**no need to write so comment)
 	instruction : out std_logic_vector(31 downto 0);
 	instruction_read : out std_logic;
-	current_pc_to_dstage : out std_logic_vector(31 downto 0);
+	current_pc_to_dstage : out std_logic_vector(31 downto 0)
+);
 
 end instructionFetch;
 
-architecture arch of cache is
+architecture arch of instructionFetch is
 
 --declarations
-signal pc_address : Integer range 0 to 31 :='0';
+signal pc_address : Integer range 0 to 31 :=0;
+signal instruction_read_sig : std_logic;
 
 component instructionMemory
     GENERIC(
@@ -55,24 +57,27 @@ component instructionMemory
 	);
 end component;
 
-begin inst_get: process(clock)
+begin
 
-InstMem1: instructionMemory 
-port map(clock => clock, writedata => s_writedata , 
-address => pc_address, mem_write => s_write , 
-mem_read => instruction_read, readdata => instruction, waitrequest => s_waitrequest);
+U1: component instructionMemory
+--generic map (ram_size,mem_delay,clock_period)
+port map (clock,s_writedata,pc_address,s_write,instruction_read_sig,instruction,s_waitrequest);
 
-if hazard_detect = '0'
-	if ex_is_new_pc = '1' then 
-		pc_address <= to_integer (unsigned(ex_pc(31 downto 0));
-	else
-		pc_address <= pc_address + 1;
-	end if;
-else
-pc_address <= pc_address;
-end if;
+	inst_get: process(clock)
+	begin
+		if(hazard_detect = '0') then
+			if(ex_is_new_pc = '1') then 
+				pc_address <= to_integer(unsigned(ex_pc(31 downto 0)));
+			else
+				pc_address <= pc_address + 1;
+			end if;
+		else
+			pc_address <= pc_address;
+		end if;
 
-end process;
-current_pc_to_dstage <= std_logic_vector(to_unsigned(pc_address, pc_address'length);
+	end process;
+
+current_pc_to_dstage <= std_logic_vector(to_unsigned(pc_address, 32));
+instruction_read <= instruction_read_sig;
 
 end arch;
