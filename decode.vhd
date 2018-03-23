@@ -151,7 +151,8 @@ if rising_edge(clk) then
 			ex_regt <= registers(regt_addr);
 			ex_regs <= registers(regs_addr);
 			ex_shift <= temp_instr(10 downto 6);
-			ex_func <= temp_instr(5 downto 0);	
+			ex_func <= temp_instr(5 downto 0);
+			stall<='0';	
 		end if;
 
 		--register to store resulting operation
@@ -161,6 +162,7 @@ if rising_edge(clk) then
 		else
 			ex_regd <= std_logic_vector(to_unsigned(regd_addr, ex_regd'length));
 			write_busy(regd_addr)<='1';
+			stall<='0';
 		end if;
 	
 	else --if I instruction
@@ -181,6 +183,7 @@ if rising_edge(clk) then
 			bubble;
 		else
 			ex_regs <= registers(regs_addr);
+			stall<='0';
 		end if;
 
 		--register to store resulting operation
@@ -191,6 +194,7 @@ if rising_edge(clk) then
 			test<="00100";
 			ex_regt <= std_logic_vector(to_unsigned(regt_addr, ex_regt'length));
 			write_busy(regt_addr)<='1';
+			stall<='0';
 		end if;
 	end if;	
 end if;

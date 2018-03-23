@@ -114,16 +114,20 @@ end process;
 
 test_process: process
 begin
+	--initialize decode stage
 	if_pc <=x"12345678";
 	if_instr <= x"00000000";
 	reset<='1';
 	wait for clk_period;
 	reset<='0';
 	wait for clk_period/2;
+
+	--begin testing
 	wait for clk_period;
-	--addi $1, $0, 3
+	--addi $1, $0, 3 ($1 = Data in $0 + 3)
 	if_instr <= "00100000000000010000000000000011";
 	wait for clk_period;
+	--addi $2, $5, 17 ($2 = Data in $5 + 17)
 	if_instr <= "00100000101000100000000000010001";
 	wait for clk_period;
 	if_instr <= x"00000000";
@@ -131,10 +135,14 @@ begin
 	--addi $1, $0, 3 should cause data hazard
 	if_instr <= "00100000000000010000000000000111";
 	wait for clk_period;
-	reset<='1';
+	--fix data hazard by sending updated register value
+	wb_flag<='1';
+	wb_register<=x"00000001";
+	wb_data<=x"00000001";
 	if_instr <= x"00000000";
 	wait for clk_period;
-	reset<='0';
+	
+	wb_flag<='0';
 	if_instr <= "00100000101000110000000000010001";
 	wait for clk_period;
 	if_instr <= x"00000000";
