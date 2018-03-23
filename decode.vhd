@@ -38,7 +38,7 @@ port(
 
 	--Data Hazard Detection
 	hazard : out std_logic; --high if hazard
-
+	
 	--Registers
 	out_registers : out data_array
 );
@@ -52,37 +52,45 @@ type bit_array is array(31 downto 0) of std_logic;
 signal registers : data_array;--32 registers of 32 bits
 signal write_busy : bit_array; --busy
 
-signal opcode : std_logic_vector(5 downto 0);
-signal regs_addr, regt_addr, regd_addr : integer; --register array address
-
-signal temp_pc : std_logic_vector (31 downto 0);
-signal temp_instr : std_logic_vector (31 downto 0);
 signal stall : std_logic;
+
+signal no_instr : std_logic;
+
+signal test : std_logic_vector(4 downto 0);
 
 begin
 
 --TODO: I instruction extended immediates, stalls
 
 process (clk, reset)
+variable opcode : std_logic_vector(5 downto 0) :="000000";
+variable regs_addr, regt_addr, regd_addr : integer := 0; --register array address
+
+variable temp_pc : std_logic_vector (31 downto 0):=x"00000000";
+variable temp_instr : std_logic_vector (31 downto 0):=x"00000000";
+
 procedure bubble IS
 begin
 	stall <= '1';
 	hazard <= '1';
-	ex_regs <= registers(0);
-	ex_regt <= registers(0);
-	ex_regd <= registers(0);
+	ex_regs <= x"00000000";
+	ex_regt <= x"00000000";
+	ex_regd <= x"00000000";
+	ex_opcode <= "000000";
 
 	ex_shift <= "00000";
 	ex_func <= "100000";
+	ex_immed <= x"00000000";
 end procedure;
 
 begin
 if reset = '1' then
 	for I in 0 to 31 loop
 		registers(I) <= x"00000000";
+		write_busy(I) <= '0';
 	end loop;
 	ex_pc <= x"00000000";
-	ex_opcode <= x"00000000";
+	ex_opcode <= "000000";
 	ex_regs <= x"00000000";
 	ex_regt <= x"00000000";
 	ex_regd <= x"00000000";
@@ -91,6 +99,14 @@ if reset = '1' then
 	ex_immed <= x"00000000";
 	target <= "00000000000000000000000000";
 	hazard <= '0';
+
+	temp_instr := x"00000000";
+	
+	opcode := "000000";
+	regs_addr:=0;
+	regt_addr:=0;
+	regd_addr:=0;
+	stall<='0';
 end if;
 if rising_edge(clk) then
 	--write data to registers from the write back stage
@@ -103,22 +119,31 @@ if rising_edge(clk) then
 	
 	--if stall, do not update instruction or pc
 	if stall = '0' then
-		temp_pc <= if_pc;
-		temp_instr <= if_instr;
+		temp_pc := if_pc;
+		temp_instr := if_instr;
 	end if;
 	ex_pc <= temp_pc;
+	no_instr <='0';
 
 	--split input instruction into corresponding output functions
-	opcode <= if_instr(31 downto 26);
-	ex_opcode <= if_instr(31 downto 26);
+	opcode := temp_instr(31 downto 26);
+	ex_opcode <= temp_instr(31 downto 26);
 
-	if ((opcode = "000011") or (opcode = "000010")) then --if J instruction
-		target <= if_instr(25 downto 0);
-
+	if (temp_instr = x"00000000" ) then--no instruction, deassert outputs
+		no_instr <= '1';	
+		test<="00001";
+		ex_regs<=x"00000000";
+		ex_regt<=x"00000000";
+		ex_regd<=x"00000000";
+		ex_immed<=x"00000000";	
+	elsif ((opcode = "000011") or (opcode = "000010")) then --if J instruction
+		target <= temp_instr(25 downto 0);
+		test<="00010";
 	elsif (opcode = "000000") then --if R instruction
+		test<="00011";
 		--get data from registers and send them to EX
-		regs_addr <= to_integer(unsigned(temp_instr(25 downto 21)));
-		regt_addr <= to_integer(unsigned(temp_instr(20 downto 16)));
+		regs_addr := to_integer(unsigned(temp_instr(25 downto 21)));
+		regt_addr := to_integer(unsigned(temp_instr(20 downto 16)));
 		--check if those registers are going to be written to
 		if (write_busy(regs_addr) = '1' or write_busy(regt_addr) = '1') then
 			bubble;
@@ -130,7 +155,7 @@ if rising_edge(clk) then
 		end if;
 
 		--register to store resulting operation
-		regd_addr <= to_integer(unsigned(if_instr(15 downto 11)));
+		regd_addr := to_integer(unsigned(temp_instr(15 downto 11)));
 		if (write_busy(regd_addr) = '1' or regd_addr = 0) then --Rd is being used in previous instruction
 			bubble;
 		else
@@ -139,23 +164,6 @@ if rising_edge(clk) then
 		end if;
 	
 	else --if I instruction
-		--get data from registers and send them to EX
-		regs_addr <= to_integer(unsigned(temp_instr(25 downto 21)));
-		if (write_busy(regs_addr) = '1') then
-			bubble;
-		else
-			ex_regs <= registers(regs_addr);
-		end if;
-
-		--register to store resulting operation
-		regt_addr <= to_integer(unsigned(temp_instr(20 downto 16)));
-		if (write_busy(regt_addr) = '1' or regd_addr = 0) then --Rt is being used in previous instruction
-			bubble;
-		else
-			ex_regt <= std_logic_vector(to_unsigned(regt_addr, ex_regt'length));
-			write_busy(regt_addr)<='1';
-		end if;
-
 		--andi, ori are ZeroExtImm instructions
 		if (opcode = "001100" or opcode = "001101") then
 			ex_immed <= x"0000" & temp_instr(15 downto 0);
@@ -166,6 +174,24 @@ if rising_edge(clk) then
 				ex_immed <= x"0000" & temp_instr(15 downto 0);
 			end if;
 		end if;	
+
+		--get data from registers and send them to EX
+		regs_addr := to_integer(unsigned(temp_instr(25 downto 21)));
+		if (write_busy(regs_addr) = '1') then
+			bubble;
+		else
+			ex_regs <= registers(regs_addr);
+		end if;
+
+		--register to store resulting operation
+		regt_addr := to_integer(unsigned(temp_instr(20 downto 16)));
+		if (write_busy(regt_addr) = '1' or regt_addr = 0) then --Rt is being used in previous instruction
+			bubble;
+		else
+			test<="00100";
+			ex_regt <= std_logic_vector(to_unsigned(regt_addr, ex_regt'length));
+			write_busy(regt_addr)<='1';
+		end if;
 	end if;	
 end if;
 
