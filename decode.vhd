@@ -107,8 +107,8 @@ if reset = '1' then
 	regt_addr:=0;
 	regd_addr:=0;
 	stall<='0';
-end if;
-if rising_edge(clk) then
+
+elsif rising_edge(clk) then
 	--write data to registers from the write back stage
 	if (wb_flag = '1') then
 		registers(to_integer(unsigned(wb_register))) <= wb_data;
