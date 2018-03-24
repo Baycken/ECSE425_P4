@@ -16,6 +16,7 @@ proc AddWaves {} {
     add wave -position end sim:/mem_stage_tb/mem_write_data
 
 
+
 }
 
 vlib work

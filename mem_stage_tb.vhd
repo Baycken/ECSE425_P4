@@ -23,12 +23,12 @@ port(
 		wb_dest_reg : out std_logic_vector(31 downto 0);
 
 		--data memory communication
-		mem_data_in : in std_logic_vector (31 downto 0);
+		mem_read_data : in std_logic_vector (31 downto 0);
 		mem_waitrequest : in std_logic;
 		mem_write : out std_logic;
 		mem_read : out std_logic;
 		mem_addr : out integer;
-		mem_data_out : out std_logic_vector (31 downto 0)
+		mem_write_data : out std_logic_vector (31 downto 0)
 );
 end component;
 
@@ -62,12 +62,12 @@ signal wb_data : std_logic_vector(31 downto 0);
 signal wb_dest_reg : std_logic_vector(31 downto 0);
 
 --data memory communication
-signal mem_data_in : std_logic_vector (31 downto 0);
+signal mem_read_data : std_logic_vector (31 downto 0);
 signal mem_waitrequest : std_logic;
 signal mem_write : std_logic;
 signal mem_read : std_logic;
 signal mem_addr : integer;
-signal mem_data_out : std_logic_vector (31 downto 0);
+signal mem_write_data : std_logic_vector (31 downto 0);
 
 constant clk_period : time := 2 ns;
 
@@ -83,22 +83,22 @@ port map(
 	ex_store=>ex_store,
 	wb_data=>wb_data,
 	wb_dest_reg=>wb_dest_reg,
-	mem_data_in=>mem_data_in,
+	mem_read_data=>mem_read_data,
 	mem_waitrequest=>mem_waitrequest,
 	mem_write=>mem_write,
 	mem_read=>mem_read,
 	mem_addr=>mem_addr,
-	mem_data_out=>mem_data_out
+	mem_write_data=>mem_write_data
 );
 
 mem: data_memory
 port map(
 	clock=>clk,
-	writedata=>mem_data_out,
+	writedata=>mem_write_data,
 	address=>mem_addr,
 	memwrite=>mem_write,
 	memread=>mem_read,
-	readdata=>mem_data_in,
+	readdata=>mem_read_data,
 	waitrequest=>mem_waitrequest
 );
 clk_process : process
