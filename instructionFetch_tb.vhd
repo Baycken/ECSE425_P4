@@ -40,7 +40,7 @@ end component;
 -- test signals 
 signal reset : std_logic := '0';
 signal clock : std_logic := '0';
-constant clk_period : time := 1 ns;
+constant clk_period : time := 2 ns;
 
 signal addr : std_logic_vector (31 downto 0);
 	--reply_back_pc : out std_logic_vector (31 downto 0);
@@ -96,17 +96,17 @@ begin
 -- put your tests here
 	hazard_detect <= '0';
 	ex_is_new_pc <= '1';
-	ex_pc <= x"10101010";
+	ex_pc <= x"0000000A";
 	WAIT FOR 1 * clk_period;
-	ASSERT (current_pc_to_dstage = x"10101010") REPORT "pc sent to ID should be pc from ex" SEVERITY ERROR; 	
+	ASSERT (current_pc_to_dstage = x"0000000A") REPORT "pc sent to ID should be pc from ex" SEVERITY ERROR; 	
 
 	ex_is_new_pc <= '0';
 	WAIT FOR 1 * clk_period;
-	ASSERT (current_pc_to_dstage = x"10101011") REPORT "pc sent to ID should be incremented by 1" SEVERITY ERROR; 	
+	ASSERT (current_pc_to_dstage = x"0000000B") REPORT "pc sent to ID should be incremented by 1" SEVERITY ERROR; 	
 
 	hazard_detect <= '1';
 	WAIT FOR 1 * clk_period;
-	ASSERT (current_pc_to_dstage = x"10101011") REPORT "pc sent to ID should be held the same if hazard" SEVERITY ERROR;
+	ASSERT (current_pc_to_dstage = x"0000000B") REPORT "pc sent to ID should be held the same if hazard" SEVERITY ERROR;
 	
 	WAIT;
 end process;
