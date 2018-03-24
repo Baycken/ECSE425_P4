@@ -22,7 +22,7 @@ ENTITY mem_stage IS
 		mem_waitrequest : in std_logic;
 		mem_write : out std_logic;
 		mem_read : out std_logic;
-		mem_addr : out integer;
+		mem_addr : out integer RANGE 0 TO 8191;
 		mem_write_data : out std_logic_vector (31 downto 0)
 	);
 end mem_stage;

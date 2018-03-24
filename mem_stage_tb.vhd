@@ -27,7 +27,7 @@ port(
 		mem_waitrequest : in std_logic;
 		mem_write : out std_logic;
 		mem_read : out std_logic;
-		mem_addr : out integer;
+		mem_addr : out integer RANGE 0 TO 8191;
 		mem_write_data : out std_logic_vector (31 downto 0)
 );
 end component;
@@ -40,7 +40,7 @@ component data_memory IS
 	PORT (
 		clock: IN STD_LOGIC;
 		writedata: IN STD_LOGIC_VECTOR (31 DOWNTO 0);
-		address: IN INTEGER RANGE 0 TO 8192-1;
+		address: IN INTEGER RANGE 0 TO 8191;
 		memwrite: IN STD_LOGIC;
 		memread: IN STD_LOGIC;
 		readdata: OUT STD_LOGIC_VECTOR (31 DOWNTO 0);
@@ -66,7 +66,7 @@ signal mem_read_data : std_logic_vector (31 downto 0);
 signal mem_waitrequest : std_logic;
 signal mem_write : std_logic;
 signal mem_read : std_logic;
-signal mem_addr : integer;
+signal mem_addr : integer:=0;
 signal mem_write_data : std_logic_vector (31 downto 0);
 
 constant clk_period : time := 2 ns;
@@ -101,6 +101,7 @@ port map(
 	readdata=>mem_read_data,
 	waitrequest=>mem_waitrequest
 );
+
 clk_process : process
 begin
   clk <= '0';
