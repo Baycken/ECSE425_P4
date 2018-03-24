@@ -111,7 +111,30 @@ end process;
 
 test_process: process
 begin
-	--test stuff
+	reset<='1';
+	wait for clk_period;
+	reset<='0';
+	
+	wait for clk_period/2;
+	wait for clk_period;
+	ex_result<=x"00000044";
+	ex_dest_reg<=x"00000002";
+	wait for clk_period;
+	ex_result<=x"00000022";
+	ex_dest_reg<=x"00000003";
+	wait for clk_period;
+	ex_result<=x"00000000";
+	ex_dest_reg<=x"00000000";
+	wait for clk_period;
+	ex_load <= '1';
+	ex_result<=x"00000012";
+	ex_dest_reg<=x"00000011";
+	
+	wait for clk_period;
+	ex_load <= '0';
+	ex_result<=x"00000000";
+	ex_dest_reg<=x"00000000";
 	wait;
+
 end process;
 end;

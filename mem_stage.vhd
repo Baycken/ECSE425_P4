@@ -18,12 +18,12 @@ ENTITY mem_stage IS
 		wb_dest_reg : out std_logic_vector(31 downto 0);
 
 		--data memory communication
-		mem_data_in : in std_logic_vector (31 downto 0);
+		mem_read_data : in std_logic_vector (31 downto 0);
 		mem_waitrequest : in std_logic;
 		mem_write : out std_logic;
 		mem_read : out std_logic;
 		mem_addr : out integer;
-		mem_data_out : out std_logic_vector (31 downto 0)
+		mem_write_data : out std_logic_vector (31 downto 0)
 	);
 end mem_stage;
 
@@ -42,6 +42,12 @@ begin
 if (reset = '1') then
 	--reset data_memory
 elsif (rising_edge(clk)) then
+	mem_read<='0';
+	mem_write<='0';
+	mem_write_data<=x"00000000";
+	mem_addr<=0;
+	wb_data<=x"00000000";
+	wb_dest_reg<=x"00000000";
 	if (ex_load = '1') then --read from mem and put it into register
 		if (mem_busy = '1') then
 			--stall
@@ -66,7 +72,7 @@ elsif (rising_edge(clk)) then
 		mem_addr <= to_integer(unsigned(ex_dest_reg));
 
 		--result is data into address
-		mem_data_out <= ex_result;
+		mem_write_data <= ex_result;
 	else --pass EX data to WB stage
 		wb_data<=ex_result;
 		wb_dest_reg<=ex_dest_reg;
