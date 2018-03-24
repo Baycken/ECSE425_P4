@@ -37,7 +37,7 @@ end instructionFetch;
 architecture arch of instructionFetch is
 
 --declarations
-signal pc_address : std_logic_vector (31 downto 0);
+signal pc_address : INTEGER RANGE 0 TO 1023;
 signal instruction_read_sig : std_logic;
 
 component instructionMemory
@@ -49,7 +49,7 @@ component instructionMemory
 	PORT (
 		clock: IN STD_LOGIC;
 		writedata: IN STD_LOGIC_VECTOR (31 DOWNTO 0);
-		address: IN STD_LOGIC_VECTOR (31 DOWNTO 0);
+		address: IN INTEGER RANGE 0 TO 1023;
 		memwrite: IN STD_LOGIC;
 		memread: IN STD_LOGIC;
 		readdata: OUT STD_LOGIC_VECTOR (31 DOWNTO 0);
@@ -67,9 +67,9 @@ port map (clock,s_writedata,pc_address,s_write,instruction_read_sig,instruction,
 	begin
 		if(hazard_detect = '0') then
 			if(ex_is_new_pc = '1') then 
-				pc_address <= ex_pc;
+				pc_address <= to_integer(unsigned(ex_pc));
 			else
-				pc_address <= std_logic_vector(unsigned(pc_address) + 1);
+				pc_address <= pc_address + 1;
 			end if;
 		else
 			pc_address <= pc_address;
@@ -77,7 +77,7 @@ port map (clock,s_writedata,pc_address,s_write,instruction_read_sig,instruction,
 
 	end process;
 
-current_pc_to_dstage <= pc_address;
+current_pc_to_dstage <= std_logic_vector(to_unsigned(pc_address,32));
 instruction_read <= instruction_read_sig;
 
 end arch;
