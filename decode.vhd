@@ -147,6 +147,15 @@ elsif rising_edge(clk) then
 		--check if those registers are going to be written to
 		if (write_busy(regs_addr) = '1' or write_busy(regt_addr) = '1') then
 			bubble;
+		elsif (regd_addr = 0) then--if instruction is trying to change register 0, do add $0,$0,0
+			ex_regs <= x"00000000";
+			ex_regt <= x"00000000";
+			ex_regd <= x"00000000";
+			ex_opcode <= "000000";
+
+			ex_shift <= "00000";
+			ex_func <= "100000";
+			ex_immed <= x"00000000";
 		else
 			ex_regt <= registers(regt_addr);
 			ex_regs <= registers(regs_addr);
@@ -157,8 +166,18 @@ elsif rising_edge(clk) then
 
 		--register to store resulting operation
 		regd_addr := to_integer(unsigned(temp_instr(15 downto 11)));
-		if (write_busy(regd_addr) = '1' or regd_addr = 0) then --Rd is being used in previous instruction
+		if (write_busy(regd_addr) = '1') then --Rd is being used in previous instruction
 			bubble;
+		elsif (regd_addr = 0) then--if instruction is trying to change register 0, do add $0,$0,0
+			ex_regs <= x"00000000";
+			ex_regt <= x"00000000";
+			ex_regd <= x"00000000";
+			ex_opcode <= "000000";
+
+			ex_shift <= "00000";
+			ex_func <= "100000";
+			ex_immed <= x"00000000";
+			
 		else
 			ex_regd <= std_logic_vector(to_unsigned(regd_addr, ex_regd'length));
 			write_busy(regd_addr)<='1';
