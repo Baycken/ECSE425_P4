@@ -200,7 +200,7 @@ elsif rising_edge(clk) then
 		regt_addr := to_integer(unsigned(temp_instr(20 downto 16)));
 		if (write_busy(regt_addr) = '1') then --Rt is being used in previous instruction
 			bubble;
-		elsif (regd_addr = 0) then--if instruction is trying to change register 0, do add $0,$0,0
+		elsif (regt_addr = 0) then--if instruction is trying to change register 0, do add $0,$0,0
 			ex_regs <= x"00000000";
 			ex_regt <= x"00000000";
 			ex_regd <= x"00000000";
