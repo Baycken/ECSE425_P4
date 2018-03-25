@@ -9,7 +9,8 @@ PORT (
 
    -- Interface to instruction cache
    pc_o : OUT STD_LOGIC_VECTOR (31 DOWNTO 0);
-   inst_i : IN STD_LOGIC_VECTOR (31 DOWNTO 0);
+   inst_read_o : OUT STD_LOGIC;
+   inst_data_i : IN STD_LOGIC_VECTOR (31 DOWNTO 0);
    inst_wait_i : IN STD_LOGIC;
 
    -- Interface to user memory
@@ -28,150 +29,148 @@ ARCHITECTURE behaviour OF mips32 IS
 -- Instruction fetching
 COMPONENT fetch IS
 PORT(
-   clk_i : IN STD_LOGIC; -- Clock Input
-   rst_i : IN STD_LOGIC; -- Reset Input, Reset on '1'
+  clock : in std_logic;
+	reset : in std_logic;
 
-   inst_wait_i : IN STD_LOGIC; -- Instruction not hit, input from cache
-   inst_i: IN STD_LOGIC_VECTOR (31 DOWNTO 0); -- Instruction input from cache
-   pc_o: OUT STD_LOGIC_VECTOR (31 DOWNTO 0); -- PC out put to cache
-   inst_o: OUT STD_LOGIC_VECTOR (31 DOWNTO 0); -- Instruction out to decode
+	-- Avalon interface --
+	--communication with pc (getting and sending back the incremented one or the completely new pc)
+	addr : in std_logic_vector (31 downto 0);
+	--reply_back_pc : out std_logic_vector (31 downto 0);
+	--test
+	s_write : in std_logic;
+	s_writedata : in std_logic_vector (31 downto 0);
+	s_waitrequest : out std_logic; -- not really using it
 
-   pc_jump_i : IN STD_LOGIC_VECTOR (31 DOWNTO 0); -- Jump Target from execute
-   jump_token_i : IN STD_LOGIC; -- High if jump is needed, from execute
+	--communication with ID stage
+	hazard_detect : in std_logic:='0';
 
-   is_hazard_i: IN STD_LOGIC; -- Hazard indicator input from decode
-   -- is_flush_i: IN STD_LOGIC; -- Flush indicator input for branch prediction, input from execute
-   is_mem_stall_i: IN STD_LOGIC; -- RAM operation wait indicator, input from memory
+	--communication with EX stage
+	ex_is_new_pc : in std_logic:='0';
+	ex_pc : in std_logic_vector(31 downto 0);
+
+	--communication with decode stage (**no need to write so comment)
+	instruction : out std_logic_vector(31 downto 0);
+	instruction_read : out std_logic;
+	current_pc_to_dstage : out std_logic_vector(31 downto 0)
 );
 END COMPONENT;
 
 -- Instruction Decoding
 COMPONENT decode IS
 PORT(
-   clk_i : IN STD_LOGIC; -- Clock Input
-   rst_i : IN STD_LOGIC; -- Reset Input, Reset on '1'
-   inst_wait_i : IN STD_LOGIC; -- Instruction not hit, input from cache
-   pc_i : IN STD_LOGIC_VECTOR (31 DOWNTO 0); -- PC input from fetch
-   inst_i : IN STD_LOGIC_VECTOR (31 DOWNTO 0); -- instruction input from fetch
+  --inputs
+	if_pc : in std_logic_vector(31 downto 0); --program counter
+	if_instr : in std_logic_vector (31 downto 0); --32 bit mips instruction
+	wb_flag : in std_logic;
+	wb_register : in std_logic_vector(31 downto 0); --register to store wb_data
+	wb_data : in std_logic_vector(31 downto 0); --data from writeback stage to put into register
+	clk : in std_logic;
+	reset : in std_logic;
 
-   write_flag_i : IN STD_LOGIC; -- writeback valid indicator, input from writeback
-   write_reg_i : IN STD_LOGIC_VECTOR (4 DOWNTO 0); -- which register to write, input from writeback
-   write_data_i : IN STD_LOGIC_VECTOR (31 DOWNTO 0); -- Data to write to register, input from writeback
-   -- reg_rs_o : OUT STD_LOGIC_VECTOR (4 DOWNTO 0); -- Forward register rs
-   -- reg_rt_o : OUT STD_LOGIC_VECTOR (4 DOWNTO 0); -- Forward register rt
-   -- reg_rd_o : OUT STD_LOGIC_VECTOR (4 DOWNTO 0); -- Forward register rd
+	--outputs for both R and I instructions
+	ex_pc : out std_logic_vector(31 downto 0); --program counter
+	ex_opcode: out std_logic_vector(5 downto 0); --intruction opcode
+	ex_regs : out std_logic_vector(31 downto 0); --register s
+	ex_regt : out std_logic_vector(31 downto 0); --register t
 
-   -- is_flush_i : IN STD_LOGIC; -- Flush indicator input for branch prediction, input from execute
-   is_mem_stall_i : IN STD_LOGIC; -- RAM operation wait indicator, input from memory
+	--R instructions
+	ex_regd : out std_logic_vector(31 downto 0); --register d
+	ex_shift : out std_logic_vector(4 downto 0); --shift amount
+	ex_func : out std_logic_vector(5 downto 0); -- function
 
-   rs_data_o : OUT STD_LOGIC_VECTOR (31 DOWNTO 0); -- Register data from $s to execute
-   rt_data_o : OUT STD_LOGIC_VECTOR (31 DOWNTO 0); -- Register data from $T to execute
-   imm_data_o : OUT STD_LOGIC_VECTOR (31 DOWNTO 0); -- Extended data from immediate value to execute
+	--I instructions
+	ex_immed : out std_logic_vector(31 downto 0); --immediate value
 
-   decode_opcode_o : OUT STD_LOGIC_VECTOR (5 DOWNTO 0); -- Decoded opcode to execute
-   decode_shamt_o : OUT STD_LOGIC_VECTOR (4 DOWNTO 0); -- Decoded shift amount to execute
-   decode_funct_o: OUT STD_LOGIC_VECTOR (5 DOWNTO 0); -- Decoded function code to execute
-   is_hazard_o : OUT STD_LOGIC; -- Hazard detection out to fetch
+	--J instructions
+	target : out std_logic_vector(25 downto 0); --branch target
+
+	--Data Hazard Detection
+	hazard : out std_logic; --high if hazard
+
+	--Registers
+	out_registers : out data_array
 );
 END COMPONENT;
 
 -- Execution
 COMPONENT execute IS
 PORT(
-   clk_i : IN STD_LOGIC;
-   rst_i : IN STD_LOGIC;
-   is_flush_i : IN STD_LOGIC;
-   is_mem_stall_i : IN STD_LOGIC;
+--Inputs
+clk : in std_logic;
+pc_in : in std_logic_vector(31 downto 0); --For J and R type inst
+dest_reg_in : in std_logic_vector(31 downto 0);
 
-   ctr_shamt_i : IN STD_LOGIC_VECTOR (4 DOWNTO 0);
-   ctr_opcode_i : IN STD_LOGIC_VECTOR (5 DOWNTO 0);
-   ctr_funct_i : IN STD_LOGIC_VECTOR (3 DOWNTO 0);
-   ctr_wb_i : IN STD_LOGIC_VECTOR (1 DOWNTO 0);
-   pc_i : IN STD_LOGIC_VECTOR (31 DOWNTO 0);
+--R and I type instructions
+regs : in std_logic_vector(31 downto 0);
+regt : in std_logic_vector(31 downto 0);
+opcode: in std_logic_vector(5 downto 0);
 
-   inst_i : IN STD_LOGIC_VECTOR (31 DOWNTO 0);
-   reg1_data_i : IN STD_LOGIC_VECTOR (31 DOWNTO 0);
-   reg2_data_i : IN STD_LOGIC_VECTOR (31 DOWNTO 0);
-   immediate_i : IN STD_LOGIC_VECTOR (31 DOWNTO 0);
-   rt_i : IN STD_LOGIC_VECTOR (4 DOWNTO 0);
-   rd_i : IN STD_LOGIC_VECTOR (4 DOWNTO 0);
+--R type only
+regd : in std_logic_vector(31 downto 0); --register d
+shift : in std_logic_vector(3 downto 0); --shift amount
+func : in std_logic_vector(5 downto 0); -- function
 
+--I type only
+immed : in std_logic_vector(15 downto 0); --for I type instructions
 
-   reg_alu_out_o : OUT STD_LOGIC_VECTOR (31 DOWNTO 0);
-   reg_reg2_data_o : OUT STD_LOGIC_VECTOR (31 DOWNTO 0);
-   reg_write_reg_o : OUT STD_LOGIC_VECTOR (4 DOWNTO 0);
-   reg_ctr_wb_o : OUT STD_LOGIC_VECTOR (1 DOWNTO 0);
+--J type onlt
+target : in std_logic_vector(25 downto 0); --branch target
 
-   -- Bypass Interface
-   ex_mem_data_i : IN STD_LOGIC_VECTOR (31 DOWNTO 0);
-   mem_wb_data_i : IN STD_LOGIC_VECTOR (31 DOWNTO 0);
-   forward_a_i: IN STD_LOGIC_VECTOR (1 DOWNTO 0);
-   forward_b_i: IN STD_LOGIC_VECTOR (1 DOWNTO 0);
-   ex_write_reg_o: OUT STD_LOGIC_VECTOR (4 DOWNTO 0);
-   ex_regwrite_flag_o: OUT STD_LOGIC;
-   bht_token_i: IN STD_LOGIC_VECTOR (1 DOWNTO 0);
-   reg_bht_token_o: OUT STD_LOGIC_VECTOR (1 DOWNTO 0);
-
-   reg_pc_o : IN STD_LOGIC_VECTOR (31 DOWNTO 0);
-   reg_pc_branch_o : IN STD_LOGIC_VECTOR (31 DOWNTO 0);
-   reg_pc_jump_o : IN STD_LOGIC_VECTOR (31 DOWNTO 0);
-   reg_pc_next_o : IN STD_LOGIC_VECTOR (31 DOWNTO 0)
+--Outputs
+result : out std_logic_vector(31 downto 0); --ALU result
+pc_out : out std_logic_vector(31 downto 0); --Modified PC
+dest_reg_out : out std_logic_vector(31 downto 0);	--destination reg for ALU output
+is_new_pc: out std_logic :='0';
+is_load: out std_logic :='0';
+is_store: out std_logic :='0'
 );
 END COMPONENT;
+COMPONENT mem_stage IS
+	PORT (
+		reset : in std_logic;
+		clk : in std_logic;
 
--- Memory Access
-COMPONENT mem IS
-PORT(
-   clk_i : IN STD_LOGIC;
-   rst_i : IN STD_LOGIC;
+		--execution stage communication
+		ex_result: in std_logic_vector(31 downto 0);
+		ex_dest_reg : in std_logic_vector(31 downto 0);
+		ex_load : in std_logic;
+		ex_store : in std_logic;
 
-   ctr_opcode_i : IN STD_LOGIC_VECTOR (5 DOWNTO 0);
-   ctr_wb_i : IN STD_LOGIC_VECTOR (1 DOWNTO 0);
-   alu_out_i : IN STD_LOGIC_VECTOR (31 DOWNTO 0);
+		--writeback stage communication
+		wb_data : out std_logic_vector(31 downto 0);
+		wb_dest_reg : out std_logic_vector(31 downto 0);
 
-   reg2_data_i : IN STD_LOGIC_VECTOR (31 DOWNTO 0);
-   write_reg_i : IN STD_LOGIC_VECTOR (4 DOWNTO 0);
+		--data memory communication
+		mem_read_data : in std_logic_vector (31 downto 0);
+		mem_waitrequest : in std_logic;
+		mem_write : out std_logic;
+		mem_read : out std_logic;
+		mem_addr : out integer RANGE 0 TO 8191;
+		mem_write_data : out std_logic_vector (31 downto 0);
 
-   reg_mem_out_o : OUT STD_LOGIC_VECTOR (31 DOWNTO 0);
-   reg_alu_out_o : OUT STD_LOGIC_VECTOR (31 DOWNTO 0);
-   reg_write_reg_o : OUT STD_LOGIC_VECTOR (4 DOWNTO 0);
-   reg_ctr_wb_o : OUT STD_LOGIC_VECTOR (1 DOWNTO 0);
-   is_flush_o : OUT STD_LOGIC;
-   is_mem_stall_o : OUT STD_LOGIC;
-
-   pc_i : IN STD_LOGIC_VECTOR (31 DOWNTO 0);
-   pc_branch_i : IN STD_LOGIC_VECTOR (31 DOWNTO 0);
-   pc_jump_i : IN STD_LOGIC_VECTOR (31 DOWNTO 0);
-   real_token_i : IN STD_LOGIC;
-   jump_token_i : IN STD_LOGIC;
-   bht_token_i : IN STD_LOGIC_VECTOR (1 DOWNTO 0);
-   bht_write_addr_o : OUT STD_LOGIC_VECTOR (31 DOWNTO 0);
-   bht_we_o : OUT STD_LOGIC;
-   bht_din_i : IN STD_LOGIC_VECTOR (31 DOWNTO 0);
-
-   mem_addr_o : OUT INTEGER RANGE 0 TO 32767;
-   mem_write_o : OUT STD_LOGIC;
-   mem_read_o : OUT STD_LOGIC;
-   mem_read_data_i : IN STD_LOGIC_VECTOR (31 DOWNTO 0);
-   mem_write_data_o : OUT STD_LOGIC_VECTOR (31 DOWNTO 0);
-   mem_wait_i : IN STD_LOGIC
-);
-END COMPONENT;
+		--memory stall
+		stall : out std_logic
+	);
+end COMPONENT;
 
 -- Writeback
 COMPONENT writeback IS
 PORT(
-   ctr_wb_i : IN STD_LOGIC_VECTOR (1 DOWNTO 0);
-   mem_out_i : IN STD_LOGIC_VECTOR (31 DOWNTO 0);
-   alu_out_i : IN STD_LOGIC_VECTOR (31 DOWNTO 0);
-   write_data_o : OUT STD_LOGIC_VECTOR (31 DOWNTO 0);
-   regwrite_flag_o : OUT STD_LOGIC
+   clk_i : IN STD_LOGIC; -- Clock Input
+   rst_i : IN STD_LOGIC; -- Reset Input, Reset on '1'
+   write_data_i : OUT STD_LOGIC_VECTOR (31 DOWNTO 0);
+   write_reg_i : IN STD_LOGIC_VECTOR (4 DOWNTO 0);
+   write_flag_i : OUT STD_LOGIC
+
+   write_data_o : IN STD_LOGIC_VECTOR (31 DOWNTO 0);
+   write_reg_o : IN STD_LOGIC_VECTOR (4 DOWNTO 0);
+   write_flag_o : OUT STD_LOGIC
 );
 END COMPONENT;
 
 SIGNAL if_reg_pc : STD_LOGIC_VECTOR (31 DOWNTO 0);
 SIGNAL if_reg_inst : STD_LOGIC_VECTOR (31 DOWNTO 0);
-SIGNAL if_reg_bht_token : STD_LOGIC_VECTOR (1 DOWNTO 0);
+SIGNAL if_inst_read : STD_LOGIC;
 
 SIGNAL id_reg1_data : STD_LOGIC_VECTOR (31 DOWNTO 0);
 SIGNAL id_reg2_data : STD_LOGIC_VECTOR (31 DOWNTO 0);
@@ -222,23 +221,19 @@ BEGIN
 
 fetch_inst: fetch
 PORT MAP(
-   clk_i => clk_i,
-   rst_i => rst_i,
-   inst_wait_i => inst_wait_i,
-   pc_branch_i => ex_pc_branch,
-   pc_jump_i => ex_pc_jump,
-   pc_next_i => ex_pc_next,
-   real_token_i => ex_real_token,
-   jump_token_i => ex_jump_token,
+   clock => clk_i,
+   reset => rst_i,
+
+   addr => pc_o,
+   s_write  => inst_read_o,
+   s_writedata => inst_data_i,
+
+   s_waitrequest => inst_wait_i,
+   ex_pc => ex_pc_branch,
+   ex_is_new_pc => ex_jump_token,
    is_hazard_i => id_is_hazard,
-   is_flush_i => is_flush,
    is_mem_stall_i => m_is_mem_stall,
-   reg_pc_o => if_reg_pc,
-   reg_inst_o => if_reg_inst,
-   reg_bht_token_o => if_reg_bht_token,
-   bht_write_addr_i => bht_write_addr,
-   bht_we_i => m_bht_we,
-   bht_din_i => m_bht_din
+
 );
 
 decode_inst: decode
