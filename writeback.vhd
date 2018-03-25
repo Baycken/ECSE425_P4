@@ -7,7 +7,8 @@ port(
 	clk : in std_logic;
 	mem_register : in std_logic_vector(31 downto 0);
 	mem_data : in std_logic_vector(31 downto 0);
-
+	
+	id_flag : out std_logic;
 	id_register : out std_logic_vector(31 downto 0);
 	id_data : out std_logic_vector(31 downto 0)
 
@@ -23,6 +24,7 @@ begin
 process (clk)
 begin
 if rising_edge(clk) then
+	id_flag<='1';
 	id_register <= mem_register;
 	id_data <= mem_data;
 end if;
