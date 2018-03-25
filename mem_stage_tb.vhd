@@ -28,7 +28,10 @@ port(
 		mem_write : out std_logic;
 		mem_read : out std_logic;
 		mem_addr : out integer RANGE 0 TO 8191;
-		mem_write_data : out std_logic_vector (31 downto 0)
+		mem_write_data : out std_logic_vector (31 downto 0);
+
+		--memory stall
+		stall : out std_logic
 );
 end component;
 
@@ -69,6 +72,8 @@ signal mem_read : std_logic;
 signal mem_addr : integer:=0;
 signal mem_write_data : std_logic_vector (31 downto 0);
 
+signal stall : std_logic;
+
 constant clk_period : time := 2 ns;
 
 begin
@@ -88,7 +93,8 @@ port map(
 	mem_write=>mem_write,
 	mem_read=>mem_read,
 	mem_addr=>mem_addr,
-	mem_write_data=>mem_write_data
+	mem_write_data=>mem_write_data,
+	stall=>stall
 );
 
 mem: data_memory
@@ -112,11 +118,14 @@ end process;
 
 test_process: process
 begin
+	--initialize
 	reset<='1';
 	wait for clk_period;
 	reset<='0';
 	
 	wait for clk_period/2;
+
+	--test passing info from ex to wb PASS
 	wait for clk_period;
 	ex_result<=x"00000044";
 	ex_dest_reg<=x"00000002";
@@ -127,14 +136,27 @@ begin
 	ex_result<=x"00000000";
 	ex_dest_reg<=x"00000000";
 	wait for clk_period;
+
+	--test store:write x"00001234" to 12 PASS
+	ex_store<='1';
+	ex_result<=x"00001234";
+	ex_dest_reg<=x"00000012";
+	wait for clk_period;
+	ex_store<='0';
+	ex_result<=x"00000000";
+	ex_dest_reg<=x"00000000";
+	wait for clk_period;
+
+	--test load: read from 12 PASS
 	ex_load <= '1';
 	ex_result<=x"00000012";
 	ex_dest_reg<=x"00000011";
-	
 	wait for clk_period;
 	ex_load <= '0';
 	ex_result<=x"00000000";
 	ex_dest_reg<=x"00000000";
+	wait for clk_period;
+
 	wait;
 
 end process;

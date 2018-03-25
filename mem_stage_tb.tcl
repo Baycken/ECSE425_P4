@@ -14,6 +14,7 @@ proc AddWaves {} {
     add wave -position end sim:/mem_stage_tb/mem_read
     add wave -position end sim:/mem_stage_tb/mem_addr
     add wave -position end sim:/mem_stage_tb/mem_write_data
+    add wave -position end sim:/mem_stage_tb/stall
 
 
 
