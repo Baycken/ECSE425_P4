@@ -9,8 +9,7 @@ generic(
 port(
 	clock : in std_logic;
 	reset : in std_logic;
-	
-	-- Avalon interface --
+
 	--communication with pc (getting and sending back the incremented one or the completely new pc)
 	addr : in std_logic_vector (31 downto 0);
 	--reply_back_pc : out std_logic_vector (31 downto 0);
@@ -38,7 +37,7 @@ architecture arch of instructionFetch is
 
 --declarations
 signal pc_address : INTEGER RANGE 0 TO 1023;
-signal instruction_read_sig : std_logic;
+signal instruction_read_sig : std_logic:='1';
 
 component instructionMemory
     GENERIC(
@@ -63,6 +62,7 @@ U1: component instructionMemory
 --generic map (ram_size,mem_delay,clock_period)
 port map (clock,s_writedata,pc_address,s_write,instruction_read_sig,instruction,s_waitrequest);
 
+
 	inst_get: process(clock)
 	begin
 		if (clock'event and clock='1') then 
@@ -76,9 +76,9 @@ port map (clock,s_writedata,pc_address,s_write,instruction_read_sig,instruction,
 				pc_address <= pc_address;
 			end if;
 		end if;
-
 	end process;
 
+instruction_read_sig <= '1';
 current_pc_to_dstage <= std_logic_vector(to_unsigned(pc_address,32));
 instruction_read <= instruction_read_sig;
 
