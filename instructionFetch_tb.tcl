@@ -18,6 +18,7 @@ vlib work
 
 ;# Compile components if any
 vcom instructionFetch.vhd
+vcom instructionMemory.vhd
 vcom instructionFetch_tb.vhd
 
 ;# Start simulation
