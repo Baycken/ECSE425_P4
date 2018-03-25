@@ -97,13 +97,14 @@ begin
 	hazard_detect <= '0';
 	ex_is_new_pc <= '1';
 	ex_pc <= x"0000000A";
+	addr<= x"0000000C";
 	WAIT FOR 1 * clk_period;
 	ASSERT (current_pc_to_dstage = x"0000000A") REPORT "pc sent to ID should be pc from ex" SEVERITY ERROR; 	
 
 	ex_is_new_pc <= '0';
 	wait for 1 * clk_period;
 	
-	ASSERT (current_pc_to_dstage = x"0000000B") REPORT "pc sent to ID should be incremented by 1" SEVERITY ERROR; 	
+	ASSERT (current_pc_to_dstage = x"0000000C") REPORT "pc sent to ID should be incremented by 1" SEVERITY ERROR; 	
 
 	hazard_detect <= '1';
 	ASSERT (current_pc_to_dstage = x"0000000B") REPORT "pc sent to ID should be held the same if hazard" SEVERITY ERROR;
