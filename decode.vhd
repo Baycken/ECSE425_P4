@@ -58,6 +58,8 @@ signal no_instr : std_logic;
 
 signal test : std_logic_vector(4 downto 0);
 
+signal is_load : std_logic;
+
 begin
 
 --TODO: I instruction extended immediates, stalls
@@ -110,10 +112,8 @@ if reset = '1' then
 
 elsif rising_edge(clk) then
 	--write data to registers from the write back stage
-	if (wb_flag = '1') then
-		registers(to_integer(unsigned(wb_register))) <= wb_data;
-		write_busy(to_integer(unsigned(wb_register))) <= '0';
-	end if;
+	registers(to_integer(unsigned(wb_register))) <= wb_data;
+	write_busy(to_integer(unsigned(wb_register))) <= '0';
 
 	hazard<= '0';--reset hazard. It will be asserted again if a hazard persists.
 	
@@ -196,11 +196,18 @@ elsif rising_edge(clk) then
 			ex_shift <= "00000";
 			ex_func <= "100000";
 			ex_immed <= x"00000000";
-		else
+		else--lw 100011
 			ex_regs <= registers(regs_addr);
 			ex_regt <= std_logic_vector(to_unsigned(regt_addr, ex_regt'length));
 			write_busy(regt_addr)<='1';
+			
 			stall<='0';
+			if is_load = '1' then
+				bubble;
+				is_load<='0';
+			elsif opcode = "100011" then--check if lw. this will cause a mem hazard
+				is_load <='1';
+			end if;
 		end if;
 	end if;	
 end if;
