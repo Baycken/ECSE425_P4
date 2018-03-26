@@ -2,28 +2,22 @@ proc AddWaves {} {
 	;#TODO ADD WAVES BASED ON PORTS
     add wave -position end sim:/testbench/clk
     add wave -position end sim:/testbench/reset
-    add wave -position end sim:/testbench/if_instr
-    add wave -position end sim:/testbench/ex_opcode
-    add wave -position end sim:/testbench/ex_regs
-    add wave -position end sim:/testbench/ex_regt
-    add wave -position end sim:/testbench/id_data
-    add wave -position end sim:/testbench/id_register  
-
-
-
+    add wave -position end sim:/testbench/out_registers
 }
 
 vlib work
 
 ;# Compile components if any
 vcom decode.vhd
+vcom execute.vhd
 vcom writeback.vhd
 vcom memory.vhd
 vcom testbench.vhd
-vcom instructionFetch.vhd
-vcom instructionMemory.vhd
+vcom fetch.vhd
+vcom instr_mem.vhd
 vcom mem_stage.vhd
 vcom mips_top.vhd
+vcom data_memory.vhd
 
 ;# Start simulation
 vsim testbench
