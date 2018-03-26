@@ -13,7 +13,6 @@ port(
 	--inputs
 	if_pc : in std_logic_vector(31 downto 0); --program counter
 	if_instr : in std_logic_vector (31 downto 0); --32 bit mips instruction
-	wb_flag : in std_logic;
 	wb_register : in std_logic_vector(31 downto 0); --register to store wb_data
 	wb_data : in std_logic_vector(31 downto 0); --data from writeback stage to put into register
 	clk : in std_logic;
