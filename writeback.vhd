@@ -3,12 +3,12 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 entity writeback is
-port(
+port(	
+	reset : in std_logic;
 	clk : in std_logic;
 	mem_register : in std_logic_vector(31 downto 0);
 	mem_data : in std_logic_vector(31 downto 0);
 	
-	id_flag : out std_logic;
 	id_register : out std_logic_vector(31 downto 0);
 	id_data : out std_logic_vector(31 downto 0)
 
@@ -21,10 +21,12 @@ architecture behaviour of writeback is
 
 begin
 
-process (clk)
+process (clk, reset)
 begin
-if rising_edge(clk) then
-	id_flag<='1';
+if reset = '1' then
+	id_register<=x"00000000";
+	id_data<=x"00000000";
+elsif rising_edge(clk) then
 	id_register <= mem_register;
 	id_data <= mem_data;
 end if;
