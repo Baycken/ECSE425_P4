@@ -6,6 +6,7 @@ entity execute is
 port(
 	--Inputs
 	clk : in std_logic;
+	reset: in std_logic;
 	pc_in : in std_logic_vector(31 downto 0); --For J and R type inst
 	dest_reg_in : in std_logic_vector(31 downto 0);	
 
@@ -20,9 +21,9 @@ port(
 	func : in std_logic_vector(5 downto 0); -- function
 
 	--I type only
-	immed : in std_logic_vector(15 downto 0); --for I type instructions
+	immed : in std_logic_vector(32 downto 0); --for I type instructions
 
-	--J type onlt
+	--J type only
 	target : in std_logic_vector(25 downto 0); --branch target
 	
 	--Outputs
@@ -41,16 +42,27 @@ signal long_result : std_logic_vector(63 downto 0); --For mult and
 signal result_hi_local : std_logic_vector(31 downto 0); --used for mfhi
 signal result_low_local : std_logic_vector(31 downto 0); --used for mflow 
 signal zeros : std_logic_vector( to_integer(unsigned(shift)-1)downto 0); --Get zeros for padding shift 
-
+signal dest_reg_local : std_logic_vector(31 downto 0);	
 begin
 
-process(clk)
+process(clk, reset)
 begin
+if(reset='1') then
+	result_local<=x"00000000";
+	result_hi_local<=x"00000000";
+	result_low_local<=x"00000000";
+	long_result<=x"00000000";
+	result<=x"00000000";
+	is_new_pc<='0'; 
+	is_load<='0';
+	is_store<='0';
+end if;
+if rising_edge(clk) then
 	is_new_pc<='0'; --reset is_new_pc variable (assume no jump at first)
 	is_load<='0';
 	is_store<='0';
 	if (opcode = "000000") then --if R instruction 
-		dest_reg_out<=rd;
+		dest_reg_local<=regd;
 	--determine fcn to be performed 
 		case func is
 			when "100000" => 	result_local <= std_logic_vector(signed(regs) + signed(regt));	--add inst
@@ -65,8 +77,8 @@ begin
 				result_hi_local<=std_logic_vector(signed(regs) mod signed(regt));
 			when "101010"	=>	--Set Less Than (slt)
 				if(regs<regt) then
-					result_local <=x"1";
-				else result_local<=x"0";
+					result_local <=x"00000001";
+				else result_local<=x"00000000";
 				end if;
 			when "100100"	=>	result_local <= regs AND regt; --AND
 			when "100101"	=>	result_local <=regs OR regt;	--OR
@@ -101,31 +113,36 @@ begin
 		end case;
 
 	else	--I type inst
-		dest_reg_out<=rt;
+		dest_reg_local<=regt;
 		case func is
 			when "001000" => result_local<=std_logic_vector(signed(regs) + signed(immed));	--Add Immed
 			when "001010" => --Set Less Than Immed
 				if(to_integer(signed(regs))<to_integer(signed(immed))) then
-					result_local<=x"1";
-				else result_local<=x"0";
+					result_local<=x"00000001";
+				else result_local<=x"00000000";
 				end if;
-			when "001100" => result_local<= regs AND "0000000000000000"&immed;	--And Immediate (ZeroExt)
-			when "001101" => result_local<= regs OR "0000000000000000"&immed;	--Or Immediate (ZeroExt)
-			when "001110" => result_local<=regs XOR "0000000000000000"&immed; --XOR Immed (ZeroExt)
-			when "001111" => result_local<= immed(15 downto 0) & "0000000000000000"; --Load Upper Immed
+			when "001100" => result_local<= regs AND immed;	--And Immediate (ZeroExt)
+			when "001101" => result_local<= regs OR immed;	--Or Immediate (ZeroExt)
+			when "001110" => result_local<=regs XOR immed; --XOR Immed (ZeroExt)
+			when "001111" => result_local<= immed(15 downto 0); --Load Upper Immed
 			when "100011" => is_load<='1';	--Load Word
+				result_local<= std_logic_vector(unsigned(regs)+unsigned(immed));
 			when "101011" => is_store<='1';	--Store Word
+				dest_reg_local<=std_logic_vector(unsigned(regs)+unsigned(immed));
+				result<=regt;
 			when "000100" => --Branch on equal
 				if(regs=regt) then
-					pc_out<=std_logic_vector(unsigned(pc_in)+"0000000000000000"&unsigned(immed));
+					pc_out<=std_logic_vector(unsigned(pc_in)+unsigned(immed));
 				end if;
 			when "000101" => --Branch on not equal
 				if(regs/=regt) then
-					pc_out<=std_logic_vector(unsigned(pc_in)+"0000000000000000"&unsigned(immed));
+					pc_out<=std_logic_vector(unsigned(pc_in)+unsigned(immed));
 				end if;
 			when others=> report "Instruction not supported";
 		end case;
 	end if;
 result<=result_local;	--Assert the result to the output
+dest_reg_out<=dest_reg_local;
+end if;
 end process;
 end behaviour;
