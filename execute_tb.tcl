@@ -2,7 +2,6 @@ proc AddWaves {} {
 	;#Add waves we're interested in to the Wave window
     add wave -position end sim:/execute_tb/clk
     add wave -position end sim:/execute_tb/s_pc_in
-    add wave -position end sim:/execute_tb/s_dest_reg_in
     add wave -position end sim:/execute_tb/s_regs
     add wave -position end sim:/execute_tb/s_regt
     add wave -position end sim:/execute_tb/s_regd
