@@ -14,6 +14,11 @@ instructionFetch_tb.vhd and .tcl
   TEST|STATUS:
     Read from memory | PASS
     
+execute.vhd: Performs the operation specified by the ID Stage. It Outputs the result of the operation and where to store the result. It also lets the system know if the PC needs updating or if a memory operation needs to be preformed.
+
+execute_tb.vhd and execute_tb.tcl:
+tests R, I, and J type instuctions. Prints errors if they occur and shows outputs in a waveform.
+    
 decode.vhd
   Instruction decode stage. Parses instruction from IF stage.
   
