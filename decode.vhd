@@ -1,10 +1,9 @@
-library ieee;
-use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
-package my_pkg is 
-	type data_array is array(31 downto 0) of std_logic_vector(31 downto 0);
-end;
-use work.my_pkg.all;
+--library ieee;
+--use ieee.std_logic_1164.all;
+--use ieee.numeric_std.all;
+--package my_pkg is 
+--	type data_array is array(31 downto 0) of std_logic_vector(31 downto 0);
+--end;
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -39,13 +38,13 @@ port(
 	hazard : out std_logic; --high if hazard
 	
 	--Registers
-	out_registers : out data_array
+	out_registers : out std_logic_vector(1023 downto 0)
 );
 end decode;
 
 architecture behaviour of decode is
 --
---type data_array is array(31 downto 0) of std_logic_vector(31 downto 0);
+type data_array is array(31 downto 0) of std_logic_vector(31 downto 0);
 type bit_array is array(31 downto 0) of std_logic;
 
 signal registers : data_array;--32 registers of 32 bits
@@ -88,6 +87,7 @@ begin
 if reset = '1' then
 	for I in 0 to 31 loop
 		registers(I) <= x"00000000";
+		out_registers(32*(I+1)-1 downto 32*I) <= registers(I);
 		write_busy(I) <= '0';
 	end loop;
 	ex_pc <= x"00000000";
@@ -112,7 +112,7 @@ if reset = '1' then
 elsif rising_edge(clk) then
 	--write data to registers from the write back stage
 	registers(to_integer(unsigned(wb_register))) <= wb_data;
-	out_registers <= registers;
+	out_registers(32*(to_integer(unsigned(wb_register))+1)-1 downto 32*to_integer(unsigned(wb_register)))  <= registers(to_integer(unsigned(wb_register)));
 	write_busy(to_integer(unsigned(wb_register))) <= '0';
 
 	hazard<= '0';--reset hazard. It will be asserted again if a hazard persists.
