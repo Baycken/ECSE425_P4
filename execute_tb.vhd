@@ -8,22 +8,22 @@ END execute_tb;
 ARCHITECTURE behaviour OF execute_tb is
 
 COMPONENT execute IS
-port (clk : in std_logic;
+port (clk, reset : in std_logic;
 		pc_in, dest_reg_in, regs, regt, regd : in std_logic_vector(31 downto 0);
 		opcode, func: in std_logic_vector(5 downto 0);
 		shift : in std_logic_vector(3 downto 0); 
-		immed : in std_logic_vector(15 downto 0);
+		immed : in std_logic_vector(31 downto 0);
 		target : in std_logic_vector(25 downto 0);
 		result, pc_out, dest_reg_out : out std_logic_vector(31 downto 0);
 		is_new_pc, is_load, is_store : out std_logic
 	);
 end component;
 
-SIGNAL clk: STD_LOGIC := '0';
+SIGNAL clk, reset: STD_LOGIC := '0';
 signal s_pc_in, s_dest_reg_in, s_regs, s_regt, s_regd : std_logic_vector(31 downto 0) :=x"00000000";
 signal s_opcode, s_func: std_logic_vector(5 downto 0) :="000000";
 signal s_shift :std_logic_vector(3 downto 0) :="0000";
-signal s_immed :std_logic_vector(15 downto 0) :="0000000000000000";
+signal s_immed :std_logic_vector(31 downto 0) :=x"00000000";
 signal s_target :std_logic_vector(25 downto 0) :="00000000000000000000000000";
 signal s_result, s_pc_out, s_dest_reg_out :std_logic_vector(31 downto 0) :=x"00000000";
 signal s_is_new_pc, s_is_load, s_is_store :std_logic :='0';
@@ -31,7 +31,7 @@ signal s_is_new_pc, s_is_load, s_is_store :std_logic :='0';
 CONSTANT clk_period : time := 2 ns;
 BEGIN
 dut: execute
-port map(clk, s_pc_in, s_dest_reg_in, s_regs, s_regt, s_regd, s_opcode, s_func, s_shift,s_immed,s_target,s_result, s_pc_out, s_dest_reg_out,s_is_new_pc, s_is_load, s_is_store);
+port map(clk,reset, s_pc_in, s_dest_reg_in, s_regs, s_regt, s_regd, s_opcode, s_func, s_shift,s_immed,s_target,s_result, s_pc_out, s_dest_reg_out,s_is_new_pc, s_is_load, s_is_store);
 
 clk_process : PROCESS
 BEGIN
@@ -72,7 +72,7 @@ wait for (2*clk_period);
 assert (s_result="00000000000000000000000000011100") report "SLL failed";
 s_opcode<="001000"; --Try some I type Inst, rt=rs+immed
 s_func<="001000";	--ADDI
-s_immed<=x"000F"; --immed=15
+s_immed<=x"0000000F"; --immed=15
 wait for (2*clk_period);
 
 assert (s_result="00000000000000000000000000010100") report "ADDI Failed"; --Assert 5+15=20
