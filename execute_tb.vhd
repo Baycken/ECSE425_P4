@@ -9,9 +9,9 @@ ARCHITECTURE behaviour OF execute_tb is
 
 COMPONENT execute IS
 port (clk, reset : in std_logic;
-		pc_in, dest_reg_in, regs, regt, regd : in std_logic_vector(31 downto 0);
+		pc_in, regs, regt, regd : in std_logic_vector(31 downto 0);
 		opcode, func: in std_logic_vector(5 downto 0);
-		shift : in std_logic_vector(3 downto 0); 
+		shift : in std_logic_vector(4 downto 0); 
 		immed : in std_logic_vector(31 downto 0);
 		target : in std_logic_vector(25 downto 0);
 		result, pc_out, dest_reg_out : out std_logic_vector(31 downto 0);
@@ -20,9 +20,9 @@ port (clk, reset : in std_logic;
 end component;
 
 SIGNAL clk, reset: STD_LOGIC := '0';
-signal s_pc_in, s_dest_reg_in, s_regs, s_regt, s_regd : std_logic_vector(31 downto 0) :=x"00000000";
+signal s_pc_in,s_regs, s_regt, s_regd : std_logic_vector(31 downto 0) :=x"00000000";
 signal s_opcode, s_func: std_logic_vector(5 downto 0) :="000000";
-signal s_shift :std_logic_vector(3 downto 0) :="0000";
+signal s_shift :std_logic_vector(4 downto 0) :="00000";
 signal s_immed :std_logic_vector(31 downto 0) :=x"00000000";
 signal s_target :std_logic_vector(25 downto 0) :="00000000000000000000000000";
 signal s_result, s_pc_out, s_dest_reg_out :std_logic_vector(31 downto 0) :=x"00000000";
@@ -31,7 +31,7 @@ signal s_is_new_pc, s_is_load, s_is_store :std_logic :='0';
 CONSTANT clk_period : time := 2 ns;
 BEGIN
 dut: execute
-port map(clk,reset, s_pc_in, s_dest_reg_in, s_regs, s_regt, s_regd, s_opcode, s_func, s_shift,s_immed,s_target,s_result, s_pc_out, s_dest_reg_out,s_is_new_pc, s_is_load, s_is_store);
+port map(clk,reset, s_pc_in, s_regs, s_regt, s_regd, s_opcode, s_func, s_shift,s_immed,s_target,s_result, s_pc_out, s_dest_reg_out,s_is_new_pc, s_is_load, s_is_store);
 
 clk_process : PROCESS
 BEGIN
@@ -66,7 +66,7 @@ wait for (2*clk_period);
 
 assert (s_result="00000000000000000000000000100011") report "Result of 5x7 is not 35";
 s_func<="000000";	--Shift Left Logical
-s_shift<="0010";	--Shift left by 2
+s_shift<="00010";	--Shift left by 2
 wait for (2*clk_period);
 
 assert (s_result="00000000000000000000000000011100") report "SLL failed";
