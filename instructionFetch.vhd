@@ -14,8 +14,10 @@ port(
 	addr : in std_logic_vector (31 downto 0);
 	--reply_back_pc : out std_logic_vector (31 downto 0);
 	--test
-	s_write : in std_logic;
-	s_writedata : in std_logic_vector (31 downto 0);
+	
+	--just used to connect the instructionMemory in instructionFetch (so we can leave them floating in the instructionMemory)
+	s_write : in std_logic; --not using
+	s_writedata : in std_logic_vector (31 downto 0); --not using 
 	s_waitrequest : out std_logic; -- not really using it
 
 	--communication with ID stage
