@@ -18,7 +18,6 @@ component decode is
 port(--inputs
 	if_pc : in std_logic_vector(31 downto 0); --program counter
 	if_instr : in std_logic_vector (31 downto 0); --32 bit mips instruction
-	wb_flag : in std_logic;
 	wb_register : in std_logic_vector(31 downto 0); --register to store wb_data
 	wb_data : in std_logic_vector(31 downto 0); --data from writeback stage to put into register
 	clk : in std_logic;
@@ -51,7 +50,6 @@ end component;
 
 signal if_pc : std_logic_vector(31 downto 0); --program counter
 signal if_instr : std_logic_vector (31 downto 0); --32 bit mips instruction
-signal	wb_flag : std_logic;
 signal	wb_register : std_logic_vector(31 downto 0); --register to store wb_data
 signal	wb_data : std_logic_vector(31 downto 0); --data from writeback stage to put into register
 signal	clk : std_logic;
@@ -99,7 +97,6 @@ port map(
 	hazard => hazard,
 	out_registers=>out_registers,
 
-	wb_flag=>wb_flag,
 	wb_register =>wb_register,
 	wb_data=>wb_data
 );
@@ -136,13 +133,11 @@ begin
 	if_instr <= "00100000000000010000000000000111";
 	wait for clk_period;
 	--fix data hazard by sending updated register value
-	wb_flag<='1';
 	wb_register<=x"00000001";
 	wb_data<=x"00000001";
 	if_instr <= x"00000000";
 	wait for clk_period;
 	
-	wb_flag<='0';
 	if_instr <= "00100000101000110000000000010001";
 	wait for clk_period;
 	if_instr <= x"00000000";
