@@ -112,6 +112,7 @@ if reset = '1' then
 elsif rising_edge(clk) then
 	--write data to registers from the write back stage
 	registers(to_integer(unsigned(wb_register))) <= wb_data;
+	out_registers <= registers;
 	write_busy(to_integer(unsigned(wb_register))) <= '0';
 
 	hazard<= '0';--reset hazard. It will be asserted again if a hazard persists.
