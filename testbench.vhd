@@ -4,16 +4,6 @@ use ieee.numeric_std.all;
 use ieee.std_logic_textio.all;
 use std.textio.all;
 
-package my_pkg is 
-	type data_array is array(31 downto 0) of std_logic_vector(31 downto 0);
-end;
-use work.my_pkg.all;
-library ieee;
-use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
-use ieee.std_logic_textio.all;
-use std.textio.all;
-
 entity testbench is
 end testbench;
 
@@ -59,7 +49,7 @@ port(
 	if_instr : in std_logic_vector (31 downto 0); --32 bit mips instruction
 	wb_register : in std_logic_vector(31 downto 0); --register to store wb_data
 	wb_data : in std_logic_vector(31 downto 0); --data from writeback stage to put into register
-	clock : in std_logic;
+	clk : in std_logic;
 	reset : in std_logic;
 
 	--outputs for both R and I instructions
@@ -83,7 +73,7 @@ port(
 	hazard : out std_logic; --high if hazard
 	
 	--Registers
-	out_registers : out data_array
+	out_registers : out std_logic_vector(1023 downto 0)
 );
 end component;
 	
@@ -117,7 +107,7 @@ signal target : std_logic_vector(25 downto 0); --branch target
 
 signal hazard : std_logic;
 
-signal out_registers :  data_array;
+signal out_registers :  std_logic_vector(1023 downto 0);
 
 signal inst_writedata : STD_LOGIC_VECTOR (31 DOWNTO 0);
 signal inst_address : INTEGER RANGE 0 TO 1023;
@@ -169,7 +159,7 @@ waitrequest => data_waitrequest
 DEC: decode 
 port map(
 
-	clock => clk,
+	clk => clk,
 	reset => reset,
     --inputs
 	if_pc => if_pc,
@@ -249,7 +239,7 @@ begin
 	file_open(register_file,"register_file.txt",write_mode);
 	
 	for i in 0 to 31 loop
-		write(register_line, out_registers(i));
+		write(register_line, out_registers(32*(i+1)-1 downto 32*i));
 		writeline(register_file, register_line);
 	end loop;
 	file_close(register_file);
