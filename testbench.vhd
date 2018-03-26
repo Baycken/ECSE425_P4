@@ -1,7 +1,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
-use std.textio.all;
+use ieee.std_logic_textio.all;
 
 package my_pkg is 
 	type data_array is array(31 downto 0) of std_logic_vector(31 downto 0);
@@ -57,7 +57,7 @@ port(
 	if_instr : in std_logic_vector (31 downto 0); --32 bit mips instruction
 	wb_register : in std_logic_vector(31 downto 0); --register to store wb_data
 	wb_data : in std_logic_vector(31 downto 0); --data from writeback stage to put into register
-	clk : in std_logic;
+	clock : in std_logic;
 	reset : in std_logic;
 
 	--outputs for both R and I instructions
@@ -104,11 +104,11 @@ signal ex_regt : std_logic_vector(31 downto 0); --register t
 
 --R instructions
 signal ex_regd : std_logic_vector(31 downto 0); --register d
-signal ex_shift : std_logic_vector(3 downto 0); --shift amount
+signal ex_shift : std_logic_vector(4 downto 0); --shift amount
 signal ex_func : std_logic_vector(5 downto 0); -- function
 
 --I instructions
-signal ex_immed : std_logic_vector(15 downto 0); --immediate value	
+signal ex_immed : std_logic_vector(31 downto 0); --immediate value	
 
 --J instructions
 signal target : std_logic_vector(25 downto 0); --branch target
@@ -122,16 +122,16 @@ signal inst_address : INTEGER RANGE 0 TO 1023;
 signal inst_memwrite : STD_LOGIC;
 signal inst_memread : STD_LOGIC;
 signal inst_readdata :  STD_LOGIC_VECTOR (31 DOWNTO 0);
-signal inst_waitrequest: STD_LOGIC
+signal inst_waitrequest: STD_LOGIC;
 
 signal data_writedata : STD_LOGIC_VECTOR (31 DOWNTO 0);
 signal data_address : INTEGER RANGE 0 TO 8191;
 signal data_memwrite : STD_LOGIC;
 signal data_memread : STD_LOGIC;
 signal data_readdata :  STD_LOGIC_VECTOR (31 DOWNTO 0);
-signal data_waitrequest: STD_LOGIC
+signal data_waitrequest: STD_LOGIC;
 
-signal count : INTEGER RANGE 0 TO 1023;
+signal count : INTEGER RANGE 0 TO 0;
 
 begin
 
@@ -141,13 +141,12 @@ I_MEM: instr_mem
 port map(
 
 clock => clk,
-reset => reset,
 writedata => inst_writedata,
 address => inst_address,
 memwrite => inst_memwrite,
 memread => inst_memread,
 readdata => inst_readdata,
-waitrequest => inst_waitrequest,
+waitrequest => inst_waitrequest
     	
 );
 
@@ -155,13 +154,12 @@ D_MEM: data_memory
 port map(
 
 clock => clk,
-reset => reset,
 writedata => data_writedata,
 address => data_address,
 memwrite => data_memwrite,
 memread => data_memread,
 readdata => data_readdata,
-waitrequest => data_waitrequest,
+waitrequest => data_waitrequest
     	
    
 );
@@ -169,7 +167,8 @@ waitrequest => data_waitrequest,
 DEC: decode 
 port map(
 
-
+	clock => clk,
+	reset => reset,
     --inputs
 	if_pc => if_pc,
 	if_instr => if_instr,
@@ -224,7 +223,6 @@ begin
         reset <= '1';
         wait for 3*clk_period;
         reset <= '0';
-	count <= '0';
 	
 	file_open(program,"program.txt", read_mode);
 	while (not endfile(program)) loop
@@ -240,7 +238,7 @@ begin
 	end loop;
 	file_close(program);
 	
-	wait for 9000*clk_period;
+	wait for 2000*clk_period;
 
 	
 	file_open(register_file,"register_file.txt",write_mode);
