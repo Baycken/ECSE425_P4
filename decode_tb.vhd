@@ -1,10 +1,4 @@
-library ieee;
-use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
-package my_pkg is 
-	type data_array is array(31 downto 0) of std_logic_vector(31 downto 0);
-end;
-use work.my_pkg.all;
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -44,7 +38,7 @@ port(--inputs
 	hazard : out std_logic; --high if hazard
 
 	--Registers
-	out_registers : out data_array
+	out_registers : out std_logic_vector(1023 downto 0)
 );
 end component;
 
@@ -77,7 +71,7 @@ signal	target : std_logic_vector(25 downto 0); --branch target
 signal	hazard : std_logic; --high if hazard
 
 	--Registers
-signal	out_registers : data_array;
+signal	out_registers : std_logic_vector(1023 downto 0);
 
 begin
 
