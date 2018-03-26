@@ -131,33 +131,22 @@ elsif rising_edge(clk) then
 
 	if (temp_instr = x"00000000" ) then--no instruction, deassert outputs
 		no_instr <= '1';	
-		test<="00001";
 		ex_regs<=x"00000000";
 		ex_regt<=x"00000000";
 		ex_regd<=x"00000000";
 		ex_immed<=x"00000000";	
+
 	elsif ((opcode = "000011") or (opcode = "000010")) then --if J instruction
 		target <= temp_instr(25 downto 0);
-		test<="00010";
+
 	elsif (opcode = "000000") then --if R instruction
-		test<="00011";
 		--get data from registers and send them to EX
 		regs_addr := to_integer(unsigned(temp_instr(25 downto 21)));
 		regt_addr := to_integer(unsigned(temp_instr(20 downto 16)));
-		--check if those registers are going to be written to
-		if (write_busy(regs_addr) = '1' or write_busy(regt_addr) = '1') then
-			bubble;
-		else
-			ex_regt <= registers(regt_addr);
-			ex_regs <= registers(regs_addr);
-			ex_shift <= temp_instr(10 downto 6);
-			ex_func <= temp_instr(5 downto 0);
-			stall<='0';	
-		end if;
-
 		--register to store resulting operation
 		regd_addr := to_integer(unsigned(temp_instr(15 downto 11)));
-		if (write_busy(regd_addr) = '1') then --Rd is being used in previous instruction
+		--check if those registers are going to be written to
+		if (write_busy(regs_addr) = '1' or write_busy(regt_addr) = '1' or write_busy(regd_addr) = '1') then
 			bubble;
 		elsif (regd_addr = 0) then--if instruction is trying to change register 0, do add $0,$0,0
 			ex_regs <= x"00000000";
@@ -168,11 +157,15 @@ elsif rising_edge(clk) then
 			ex_shift <= "00000";
 			ex_func <= "100000";
 			ex_immed <= x"00000000";
-			
-		else
+		else--assign output values of instruction
+			ex_regt <= registers(regt_addr);
+			ex_regs <= registers(regs_addr);
+			ex_shift <= temp_instr(10 downto 6);
+			ex_func <= temp_instr(5 downto 0);
+
 			ex_regd <= std_logic_vector(to_unsigned(regd_addr, ex_regd'length));
 			write_busy(regd_addr)<='1';
-			stall<='0';
+			stall<='0';	
 		end if;
 	
 	else --if I instruction
@@ -189,16 +182,10 @@ elsif rising_edge(clk) then
 
 		--get data from registers and send them to EX
 		regs_addr := to_integer(unsigned(temp_instr(25 downto 21)));
-		if (write_busy(regs_addr) = '1') then
-			bubble;
-		else
-			ex_regs <= registers(regs_addr);
-			stall<='0';
-		end if;
-
 		--register to store resulting operation
 		regt_addr := to_integer(unsigned(temp_instr(20 downto 16)));
-		if (write_busy(regt_addr) = '1') then --Rt is being used in previous instruction
+
+		if (write_busy(regs_addr) = '1' or write_busy(regt_addr) = '1') then--Rt is being used in previous instruction
 			bubble;
 		elsif (regt_addr = 0) then--if instruction is trying to change register 0, do add $0,$0,0
 			ex_regs <= x"00000000";
@@ -210,7 +197,7 @@ elsif rising_edge(clk) then
 			ex_func <= "100000";
 			ex_immed <= x"00000000";
 		else
-			test<="00100";
+			ex_regs <= registers(regs_addr);
 			ex_regt <= std_logic_vector(to_unsigned(regt_addr, ex_regt'length));
 			write_busy(regt_addr)<='1';
 			stall<='0';
