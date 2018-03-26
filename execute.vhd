@@ -7,8 +7,7 @@ port(
 	--Inputs
 	clk : in std_logic;
 	reset: in std_logic;
-	pc_in : in std_logic_vector(31 downto 0); --For J and R type inst
-	dest_reg_in : in std_logic_vector(31 downto 0);	
+	pc_in : in std_logic_vector(31 downto 0); --For J and R type inst	
 
 	--R and I type instructions
 	regs : in std_logic_vector(31 downto 0);
@@ -17,11 +16,11 @@ port(
 
 	--R type only
 	regd : in std_logic_vector(31 downto 0); --register d
-	shift : in std_logic_vector(3 downto 0); --shift amount
+	shift : in std_logic_vector(4 downto 0); --shift amount
 	func : in std_logic_vector(5 downto 0); -- function
 
 	--I type only
-	immed : in std_logic_vector(32 downto 0); --for I type instructions
+	immed : in std_logic_vector(31 downto 0); --for I type instructions
 
 	--J type only
 	target : in std_logic_vector(25 downto 0); --branch target
