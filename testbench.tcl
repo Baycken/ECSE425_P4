@@ -12,12 +12,12 @@ vcom decode.vhd
 vcom execute.vhd
 vcom writeback.vhd
 vcom memory.vhd
-vcom testbench.vhd
 vcom fetch.vhd
 vcom instr_mem.vhd
 vcom mem_stage.vhd
 vcom mips_top.vhd
 vcom data_memory.vhd
+vcom testbench.vhd
 
 ;# Start simulation
 vsim testbench
