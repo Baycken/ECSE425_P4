@@ -40,7 +40,7 @@ decode_tb.vhd and .tcl
     Recieve new register data from WB   | PASS
 
 testbench.vhd
-  Reads program from program.txt, and loads instructions into instruction memory. Takes registers, and data memory and writes to files     "register_file.txt" and "memory.txt" respetively.
+  Reads program from "program.txt", that must be in same source directory as rest of files, and loads instructions into instruction       memory. Takes registers, and data memory and writes to files "register_file.txt" and "memory.txt" respetively.
 
 testbench.tcl
   Overarching simulation of entire proccesor. 
