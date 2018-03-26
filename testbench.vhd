@@ -2,6 +2,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use ieee.std_logic_textio.all;
+use std.textio.all;
 
 package my_pkg is 
 	type data_array is array(31 downto 0) of std_logic_vector(31 downto 0);
@@ -10,6 +11,7 @@ use work.my_pkg.all;
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use ieee.std_logic_textio.all;
 use std.textio.all;
 
 entity testbench is
@@ -217,6 +219,8 @@ variable mem_line:	     line;
 file 	 register_file:      text;
 variable register_line:      line;
 
+variable current_line : std_logic_vector(31 downto 0);
+
 begin
 	
         --init	
@@ -228,7 +232,8 @@ begin
 	while (not endfile(program)) loop
 		if (clk'event and clk = '1') then
                 	readline(program, program_line);
-			read(program_line, inst_writedata);
+			read(program_line, current_line);
+			inst_writedata <= current_line;
 			inst_address <= count;
 			inst_memwrite <= '1';
 			wait for clk_period;
