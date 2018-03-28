@@ -1,12 +1,4 @@
-LIBRARY ieee;
-USE ieee.std_logic_1164.all;
-USE ieee.numeric_std.all;library ieee;
-use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
-package my_pkg is 
-	type data_array is array(31 downto 0) of std_logic_vector(31 downto 0);
-end;
-use work.my_pkg.all;
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -29,7 +21,7 @@ PORT (
 	mem_read : out std_logic;
 	mem_addr : out integer RANGE 0 TO 8191;
 	mem_write_data : out std_logic_vector (31 downto 0);
-   out_registers : out data_array
+   out_registers : out std_logic_vector(1023 downto 0)
 );
 END mips32;
 
@@ -97,7 +89,7 @@ COMPONENT decode IS
 		hazard : out std_logic; --high if hazard
 
 		--Registers
-		out_registers : out data_array
+		out_registers : out std_logic_vector(1023 downto 0)
 	);
 END COMPONENT;
 
