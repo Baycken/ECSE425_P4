@@ -68,14 +68,16 @@ port map (clock,s_writedata,pc_address,s_write,instruction_read_sig,instruction,
 	inst_get: process(clock)
 	begin
 		if (clock'event and clock='1') then 
-			if(hazard_detect = '0') then
-				if(ex_is_new_pc = '1') then 
-					pc_address <= to_integer(unsigned(ex_pc));
-				else
-					pc_address <= pc_address + 1;
+			if(pc_address < 1022) then
+				if(hazard_detect = '0') then
+					if(ex_is_new_pc = '1') then 
+						pc_address <= to_integer(unsigned(ex_pc));
+					else
+						pc_address <= pc_address + 1;
+					end if;
+				else		
+					pc_address <= pc_address;
 				end if;
-			else	
-				pc_address <= pc_address;
 			end if;
 		end if;
 	end process;
