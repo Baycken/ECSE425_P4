@@ -1,3 +1,4 @@
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -42,38 +43,25 @@ GENERIC(
 	);
 end component;
 
-component decode is 
-port(
-	--inputs
-	if_pc : in std_logic_vector(31 downto 0); --program counter
-	if_instr : in std_logic_vector (31 downto 0); --32 bit mips instruction
-	wb_register : in std_logic_vector(31 downto 0); --register to store wb_data
-	wb_data : in std_logic_vector(31 downto 0); --data from writeback stage to put into register
-	clk : in std_logic;
-	reset : in std_logic;
+component mips32 is 
+PORT (
+   clk_i : IN STD_LOGIC;
+   rst_i : IN STD_LOGIC;
 
-	--outputs for both R and I instructions
-	ex_pc : out std_logic_vector(31 downto 0); --program counter
-	ex_opcode: out std_logic_vector(5 downto 0); --intruction opcode
-	ex_regs : out std_logic_vector(31 downto 0); --register s
-	ex_regt : out std_logic_vector(31 downto 0); --register t
+   -- Interface to instruction cache
+   pc_o : OUT STD_LOGIC_VECTOR (31 DOWNTO 0);
+   inst_read_o : OUT STD_LOGIC;
+   inst_data_i : IN STD_LOGIC_VECTOR (31 DOWNTO 0);
+   inst_wait_i : IN STD_LOGIC;
 
-	--R instructions
-	ex_regd : out std_logic_vector(31 downto 0); --register d
-	ex_shift : out std_logic_vector(4 downto 0); --shift amount
-	ex_func : out std_logic_vector(5 downto 0); -- function
-
-	--I instructions
-	ex_immed : out std_logic_vector(31 downto 0); --immediate value	
-
-	--J instructions
-	target : out std_logic_vector(25 downto 0); --branch target
-
-	--Data Hazard Detection
-	hazard : out std_logic; --high if hazard
-	
-	--Registers
-	out_registers : out std_logic_vector(1023 downto 0)
+   -- Interface to user memory
+	mem_read_data : in std_logic_vector (31 downto 0);
+	mem_waitrequest : in std_logic;
+	mem_write : out std_logic;
+	mem_read : out std_logic;
+	mem_addr : out integer RANGE 0 TO 8191;
+	mem_write_data : out std_logic_vector (31 downto 0);
+   out_registers : out std_logic_vector(1023 downto 0)
 );
 end component;
 	
@@ -82,32 +70,18 @@ signal reset : std_logic := '0';
 signal clk : std_logic := '0';
 constant clk_period : time := 2 ns;
 
---inputs
-signal if_pc : std_logic_vector(31 downto 0); --program counter
-signal if_instr : std_logic_vector (31 downto 0); --32 bit mips instruction
-signal wb_register : std_logic_vector(31 downto 0); --register to store wb_data
-signal wb_data : std_logic_vector(31 downto 0); --data from writeback stage to put into register
+signal pc_o : STD_LOGIC_VECTOR(31 DOWNTO 0);
+signal inst_read_o : STD_LOGIC;
+signal inst_data_i : STD_LOGIC_VECTOR(31 DOWNTO 0);
+signal inst_wait_i : STD_LOGIC;
 
---outputs for both R and I instructions
-signal ex_pc : std_logic_vector(31 downto 0); --program counter
-signal ex_opcode: std_logic_vector(5 downto 0); --intruction opcode
-signal ex_regs : std_logic_vector(31 downto 0); --register s
-signal ex_regt : std_logic_vector(31 downto 0); --register t
-
---R instructions
-signal ex_regd : std_logic_vector(31 downto 0); --register d
-signal ex_shift : std_logic_vector(4 downto 0); --shift amount
-signal ex_func : std_logic_vector(5 downto 0); -- function
-
---I instructions
-signal ex_immed : std_logic_vector(31 downto 0); --immediate value	
-
---J instructions
-signal target : std_logic_vector(25 downto 0); --branch target
-
-signal hazard : std_logic;
-
-signal out_registers :  std_logic_vector(1023 downto 0);
+signal mem_read_data: STD_LOGIC_VECTOR(31 downto 0);
+signal mem_waitrequest : STD_LOGIC;
+signal mem_write : STD_LOGIC;
+signal mem_read : STD_LOGIC;
+signal mem_addr : INTEGER RANGE 0 to 8191;
+signal mem_write_data : STD_LOGIC_VECTOR (31 DOWNTO 0);
+signal out_registers : STD_LOGIC_VECTOR(1023 downto 0);
 
 signal inst_writedata : STD_LOGIC_VECTOR (31 DOWNTO 0);
 signal inst_address : INTEGER RANGE 0 TO 1023;
@@ -123,7 +97,7 @@ signal data_memread : STD_LOGIC;
 signal data_readdata :  STD_LOGIC_VECTOR (31 DOWNTO 0);
 signal data_waitrequest: STD_LOGIC;
 
-signal count : INTEGER RANGE 0 TO 0;
+signal count : INTEGER RANGE 0 TO 1023;
 
 begin
 
@@ -156,34 +130,22 @@ waitrequest => data_waitrequest
    
 );
 
-DEC: decode 
+M_32: mips32
 port map(
 
-	clk => clk,
-	reset => reset,
-    --inputs
-	if_pc => if_pc,
-	if_instr => if_instr,
-	wb_register => wb_register,
-	wb_data => wb_data,
-	
-	ex_pc => ex_pc,
-	ex_opcode => ex_opcode,
-	ex_regs => ex_regs, --register s
-	ex_regt => ex_regt,--register t
-
-	--R instructions
-	ex_regd =>  ex_regd, --register d
-	ex_shift => ex_shift, --shift amount
-	ex_func => ex_func, -- function
-
-	--I instructions
-	ex_immed => ex_immed, --immediate value	
-
-	--J instructions
-	target => target,--branch target
-	hazard => hazard,
-
+	clk_i => clk,
+	rst_i => reset,
+ 
+	pc_o => pc_o,
+	inst_read_o => inst_read_o,
+	inst_wait_i => inst_wait_i,
+	inst_data_i => inst_data_i,
+	mem_read_data => mem_read_data,
+	mem_waitrequest => mem_waitrequest,
+	mem_write => mem_write,
+	mem_read => mem_read,
+	mem_addr => mem_addr,
+	mem_write_data => mem_write_data,
 	out_registers => out_registers
    
 );
@@ -219,9 +181,10 @@ begin
         reset <= '0';
 	
 	file_open(program,"program.txt", read_mode);
-	while (not endfile(program)) loop
-		if (clk'event and clk = '1') then
-                	readline(program, program_line);
+	for i in 0 to 1023 loop
+		if (not endfile(program)) then
+			--if (clk'event and clk = '1') then
+              		readline(program, program_line);
 			read(program_line, current_line);
 			inst_writedata <= current_line;
 			inst_address <= count;
@@ -229,6 +192,7 @@ begin
 			wait for clk_period;
 			inst_memwrite <= '0';
 			count <= count + 1;
+		--end if;
 		end if;
 	end loop;
 	file_close(program);
@@ -275,4 +239,4 @@ begin
 	wait;
 
 end process;
-end;
+end
