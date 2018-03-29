@@ -40,7 +40,7 @@ signal result_local :  std_logic_vector(31 downto 0);
 signal long_result : std_logic_vector(63 downto 0); --For mult and 
 signal result_hi_local : std_logic_vector(31 downto 0); --used for mfhi
 signal result_low_local : std_logic_vector(31 downto 0); --used for mflow 
-signal zeros : std_logic_vector( to_integer(unsigned(shift)-1)downto 0); --Get zeros for padding shift 
+--signal zeros : std_logic_vector( to_integer(unsigned(shift)-1)downto 0); --Get zeros for padding shift 
 signal dest_reg_local : std_logic_vector(31 downto 0);	
 begin
 
