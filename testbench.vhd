@@ -217,8 +217,9 @@ begin
 		write(mem_line, data_readdata);
 		writeline(mem_file, mem_line); 
 	end loop;
-	file_close(program);	
+	file_close(mem_file);	
 
+	
 	--wait for clk_period;
 	--if_instr <= x"00010005"; --I instruction (addi $1 $0 5)
 	--wait for 3*clk_period;

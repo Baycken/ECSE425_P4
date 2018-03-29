@@ -3,6 +3,8 @@ proc AddWaves {} {
     add wave -position end sim:/testbench/clk
     add wave -position end sim:/testbench/reset
     add wave -position end sim:/testbench/out_registers
+    add wave -position end sim:/testbench/inst_writedata
+    add wave -position end sim:/testbench/inst_memwrite
 }
 
 vlib work
