@@ -7,9 +7,16 @@ BEI
 ISAAC BERMAN
 MOETASSEM
 
+********************IMPORTANT NOTES***************************
+What works:
+  Each stage and it's testbench prove independent component functionality.
+  Data Hazard is properly implemented.
+  Forwarding is partially functional.
+**************************************************************
+
 FILES:
 mips_top.vhd:
-  Top level controller that interconnects the 5 stages
+  Top level controller that interconnects the 5 stages.
 
 testbench.vhd and .tcl
   Creates instances of Instruction Memory, Data Memory, and Mips23.
@@ -41,7 +48,7 @@ decode_tb.vhd and .tcl
     add $0,$0,0 when Hazard             | PASS
     Signal IF stage when Hazard         | PASS
     Recieve new register data from WB   | PASS
-    Preempt data memory hazard		| PASS
+    Preempt data memory hazard		      | PASS
     
 execute.vhd: 
   Performs the operation specified by the ID Stage. It Outputs the result of the operation and where to store the result.
@@ -63,16 +70,11 @@ mem_stage_tb.vhd and .tcl
   Testbench for the memory stage
   TEST|STAUS
     Pass data and register to WB stage	| PASS
-    Store word into data memory		| PASS
-    Load previously stored word		| PASS
+    Store word into data memory		      | PASS
+    Load previously stored word	      	| PASS
   
 writeback.vhd
   Update registers with new data based on instruction. Registers are stored in decode stage so pass data and address to ID.
 
-********************IMPORTANT NOTES***************************
-What works:
-  Each stage and it's testbench prove independent component functionality.
-  Data Hazard is properly implemented.
-  Forwarding is partially functional within the decode.
 
   
