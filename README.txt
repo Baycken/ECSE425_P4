@@ -1,11 +1,11 @@
 # ECSE425_P4
 ECSE425 Project Phase 4
 
-AIDAN PIWOWAR
-ALEXANDER ORZECHOWSKI
-BEI
-ISAAC BERMAN
-MOETASSEM
+Aidan Piwowar 260625505
+Alexander Orzechowski 260610696
+Moetassem Abdelazim 260685819
+Bei Chen Liu 270527856
+Isaac Berman 260616501
 
 ********************IMPORTANT NOTES***************************
 What works:
